@@ -1,0 +1,87 @@
+/* TEMPLATE: Dato Curioso — Fotográfico + moderno */
+.travel-card {
+  background: var(--tc-bg);
+  color: var(--tc-text);
+}
+
+.dc-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.dc-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.05) contrast(1.02);
+  transform: scale(1.02);
+  background-color: var(--tc-bg);
+  background-image: linear-gradient(160deg, #1d2a47 0%, #0f1a2e 45%, #2c3e6b 100%);
+}
+
+.dc-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 20%,
+    var(--tc-overlay) 60%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+}
+
+.dc-badge {
+  position: absolute;
+  top: 64px;
+  left: 72px;
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 30px);
+  letter-spacing: 0.14em;
+  padding: 14px 28px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dc-content {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  bottom: 150px;
+}
+
+.dc-title {
+  font-size: calc(var(--tc-text-scale) * 78px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+  margin-bottom: 28px;
+}
+
+.dc-body {
+  font-size: calc(var(--tc-text-scale) * 42px);
+  font-weight: 400;
+  line-height: 1.4;
+  opacity: 0.92;
+  max-width: 85%;
+}
+
+.dc-footer {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  bottom: 48px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: calc(var(--tc-text-scale) * 34px);
+  font-weight: 600;
+}
+
+.dc-pin { font-size: calc(var(--tc-text-scale) * 38px); }
+.dc-destination { text-transform: uppercase; letter-spacing: 0.08em; }
+.dc-dot { color: var(--tc-accent); }
+.dc-source { opacity: 0.75; font-size: calc(var(--tc-text-scale) * 30px); }

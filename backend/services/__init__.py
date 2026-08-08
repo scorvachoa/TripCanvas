@@ -1,0 +1,1 @@
+from services.image_service import get_placeholder_image_url

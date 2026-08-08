@@ -1,0 +1,6 @@
+{
+  "name": "Dato Curioso",
+  "category": "dato_curioso",
+  "description": "Fotográfico + moderno. Imagen grande, etiqueta, título llamativo y texto corto.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

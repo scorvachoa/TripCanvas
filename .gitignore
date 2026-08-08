@@ -1,0 +1,24 @@
+# Dependencias
+.venv/
+__pycache__/
+*.pyc
+
+# Entorno y secretos
+.env
+
+# Datos de usuario (proyectos guardados en JSON)
+data/projects.json
+
+# Logs
+backend/server.log
+
+# Exportaciones y archivos temporales
+output/
+*.png
+*.zip
+_render.html
+_out.json
+
+# IDE
+.vscode/
+.idea/

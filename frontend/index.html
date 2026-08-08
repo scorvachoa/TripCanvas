@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TripCanvas — AI Travel Content Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="#" class="brand" data-nav="dashboard">
+        <span class="brand-mark">✈</span>
+        <span class="brand-text">
+          <span class="brand-name">TripCanvas</span>
+          <span class="brand-sub">AI Travel Content Studio</span>
+        </span>
+      </a>
+      <nav class="main-nav">
+        <a href="#" class="nav-link" data-nav="dashboard">Inicio</a>
+        <a href="#" class="nav-link" data-nav="create">Crear</a>
+        <a href="#" class="nav-link" data-nav="projects">Proyectos</a>
+        <a href="#" class="nav-link" data-nav="templates">Plantillas</a>
+        <a href="#" class="nav-link" data-nav="destinations">Destinos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="view-dashboard" class="view view-dashboard">
+      <div class="hero">
+        <h1 class="hero-title">El lienzo para crear contenido de viajes.</h1>
+        <p class="hero-sub">Convierte un destino turístico en tarjetas listas para redes sociales con IA.</p>
+        <button class="btn btn-primary btn-lg" id="btn-hero-create">Crear tarjeta</button>
+      </div>
+
+      <div class="quick-gen card">
+        <div class="card-head">
+          <h2>Generación rápida</h2>
+          <p>Elige un destino, un tipo de contenido y cuántas tarjetas quieres.</p>
+        </div>
+        <form id="quick-gen-form" class="quick-gen-grid">
+          <div class="field">
+            <label for="qg-destination">Destino</label>
+            <select id="qg-destination" required></select>
+          </div>
+          <div class="field">
+            <label for="qg-category">Tipo de contenido</label>
+            <select id="qg-category" required></select>
+          </div>
+          <div class="field">
+            <label for="qg-count">Cantidad</label>
+            <input type="number" id="qg-count" min="1" max="20" value="5" required>
+          </div>
+          <div class="field">
+            <label for="qg-language">Idioma</label>
+            <select id="qg-language">
+              <option value="es">Español</option>
+              <option value="en">Inglés</option>
+              <option value="pt">Portugués</option>
+            </select>
+          </div>
+          <div class="quick-gen-actions">
+            <button type="submit" class="btn btn-primary" id="btn-quick-generate">
+              <span class="btn-icon">✨</span> Generar con IA
+            </button>
+          </div>
+        </form>
+        <div id="quick-gen-status" class="gen-status"></div>
+      </div>
+
+      <div class="recent card">
+        <div class="card-head">
+          <h2>Proyectos recientes</h2>
+          <a href="#" class="text-link" data-nav="projects">Ver todos</a>
+        </div>
+        <div id="recent-projects" class="project-grid"></div>
+      </div>
+    </section>
+
+    <section id="view-create" class="view view-create hidden">
+      <div class="create-header">
+        <h1>Crear contenido</h1>
+        <p>Completa la información y genera tus tarjetas con Gemini.</p>
+      </div>
+      <div class="card">
+        <form id="create-form" class="create-form">
+          <div class="field">
+            <label for="c-destination">Destino</label>
+            <input type="text" id="c-destination" list="destination-list" placeholder="Machu Picchu" required>
+            <datalist id="destination-list"></datalist>
+          </div>
+          <div class="field">
+            <label for="c-category">Categoría</label>
+            <select id="c-category"></select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="c-count">Cantidad</label>
+              <input type="number" id="c-count" min="1" max="20" value="5">
+            </div>
+            <div class="field">
+              <label for="c-language">Idioma</label>
+              <select id="c-language">
+                <option value="es">Español</option>
+                <option value="en">Inglés</option>
+                <option value="pt">Portugués</option>
+              </select>
+            </div>
+          </div>
+          <div class="create-actions">
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-create-generate">
+              <span class="btn-icon">✨</span> Generar con Gemini
+            </button>
+            <span class="hint">La generación de 10 tarjetas puede tardar unos segundos.</span>
+          </div>
+        </form>
+        <div id="create-status" class="gen-status"></div>
+      </div>
+    </section>
+
+    <section id="view-projects" class="view view-projects hidden">
+      <div class="create-header">
+        <h1>Proyectos</h1>
+        <p>Tus creaciones guardadas.</p>
+      </div>
+      <div id="projects-list" class="project-grid"></div>
+    </section>
+
+    <section id="view-templates" class="view view-templates hidden">
+      <div class="create-header">
+        <h1>Plantillas</h1>
+        <p>Elige el diseño de tus tarjetas.</p>
+      </div>
+      <div id="templates-grid" class="template-grid"></div>
+    </section>
+
+    <section id="view-destinations" class="view view-destinations hidden">
+      <div class="create-header">
+        <h1>Destinos</h1>
+        <p>Destinos turísticos disponibles.</p>
+      </div>
+      <div id="destinations-grid" class="dest-grid"></div>
+    </section>
+
+    <section id="view-editor" class="view view-editor hidden">
+      <div class="editor-toolbar">
+        <div class="editor-nav">
+          <button class="btn btn-ghost btn-sm" id="btn-back">← Volver</button>
+          <span class="editor-title" id="editor-project-name">Proyecto nuevo</span>
+        </div>
+        <div class="editor-toolbar-actions">
+          <span class="editor-card-counter" id="editor-card-counter">Tarjeta 1 / 1</span>
+          <button class="btn btn-ghost btn-sm" id="btn-prev">← anterior</button>
+          <button class="btn btn-ghost btn-sm" id="btn-next">siguiente →</button>
+          <button class="btn btn-secondary btn-sm" id="btn-save">Guardar proyecto</button>
+          <button class="btn btn-primary btn-sm" id="btn-export-all"><span class="btn-icon">📦</span> Descargar todas</button>
+        </div>
+      </div>
+
+      <div class="editor-layout">
+        <aside class="editor-left panel">
+          <div class="panel-title">Contenido</div>
+          <div class="panel-scroll">
+            <div class="field">
+              <label for="e-destination">Destino</label>
+              <input type="text" id="e-destination" list="destination-list">
+            </div>
+            <div class="field">
+              <label for="e-category">Categoría</label>
+              <select id="e-category"></select>
+            </div>
+            <div class="field">
+              <label for="e-title">Título</label>
+              <textarea id="e-title" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label for="e-body">Descripción</label>
+              <textarea id="e-body" rows="4"></textarea>
+            </div>
+            <div class="field">
+              <label for="e-question">Pregunta</label>
+              <textarea id="e-question" rows="2"></textarea>
+            </div>
+            <div class="field">
+              <label for="e-answer">Respuesta</label>
+              <textarea id="e-answer" rows="2"></textarea>
+            </div>
+            <div class="field">
+              <label for="e-myth">Mito</label>
+              <textarea id="e-myth" rows="2"></textarea>
+            </div>
+            <div class="field">
+              <label for="e-reality">Realidad</label>
+              <textarea id="e-reality" rows="2"></textarea>
+            </div>
+            <div class="field" id="facts-field">
+              <label for="e-facts">Datos (uno por línea)</label>
+              <textarea id="e-facts" rows="5"></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="e-location">Ubicación</label>
+                <input type="text" id="e-location">
+              </div>
+              <div class="field">
+                <label for="e-altitude">Altitud</label>
+                <input type="text" id="e-altitude">
+              </div>
+            </div>
+            <div class="field">
+              <label for="e-source">Fuente</label>
+              <input type="text" id="e-source">
+            </div>
+          </div>
+        </aside>
+
+        <div class="editor-center">
+          <div class="preview-stage" id="preview-stage">
+            <div class="preview-card" id="preview-card"></div>
+          </div>
+          <div class="preview-toolbar">
+            <button class="btn btn-ghost btn-sm" id="btn-export-one">Exportar PNG</button>
+            <button class="btn btn-ghost btn-sm" id="btn-copy-copy"><span class="btn-icon">📋</span> Copiar copy</button>
+          </div>
+        </div>
+
+        <aside class="editor-right panel">
+          <div class="panel-title">Diseño</div>
+          <div class="panel-scroll">
+            <div class="field">
+              <label for="d-template">Plantilla</label>
+              <select id="d-template"></select>
+            </div>
+            <div class="field">
+              <label for="d-format">Formato</label>
+              <select id="d-format">
+                <option value="instagram_portrait">Instagram Portrait · 1080×1350</option>
+                <option value="square">Square · 1080×1080</option>
+                <option value="story">Story · 1080×1920</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="d-font">Tipografía</label>
+              <select id="d-font">
+                <option value="'Poppins','Segoe UI',sans-serif">Poppins</option>
+                <option value="'Inter','Segoe UI',sans-serif">Inter</option>
+                <option value="'Playfair Display',serif">Playfair Display</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="d-bg">Fondo</label>
+              <input type="color" id="d-bg" value="#0f1a2e">
+            </div>
+            <div class="field">
+              <label for="d-text">Texto</label>
+              <input type="color" id="d-text" value="#ffffff">
+            </div>
+            <div class="field">
+              <label for="d-accent">Acento</label>
+              <input type="color" id="d-accent" value="#f4b942">
+            </div>
+            <div class="field">
+              <label for="d-overlay">Overlay <span id="d-overlay-val">0.35</span></label>
+              <input type="range" id="d-overlay" min="0" max="1" step="0.05" value="0.35">
+            </div>
+            <div class="field">
+              <label for="d-text-scale">Tamaño de texto <span id="d-text-scale-val">100%</span></label>
+              <input type="range" id="d-text-scale" min="0.8" max="1.5" step="0.05" value="1">
+            </div>
+            <div class="field">
+              <label for="d-image">Imagen</label>
+              <input type="text" id="d-image" placeholder="URL de imagen">
+              <input type="file" id="d-image-file" accept="image/*" class="file-input">
+            </div>
+            <div class="field toggle-field">
+              <label for="d-logo">Logo TripCanvas</label>
+              <label class="switch">
+                <input type="checkbox" id="d-logo" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Editar proyecto</h3>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="modal-name">Nombre</label>
+          <input type="text" id="modal-name" placeholder="Nombre del proyecto">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="modal-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="modal-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

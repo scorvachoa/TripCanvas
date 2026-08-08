@@ -1,0 +1,1198 @@
+PROMPT MAESTRO — TRIPCANVAS
+1. ROL
+
+Actúa como un ingeniero de software senior especializado en aplicaciones web, UI/UX, generación de contenido con IA y herramientas para creación de contenido visual para redes sociales.
+
+Debes desarrollar una aplicación web llamada TripCanvas.
+
+No quiero solamente una demo visual. Quiero construir una aplicación con una arquitectura limpia, modular y preparada para crecer.
+
+Antes de implementar funcionalidades complejas, analiza la arquitectura existente del proyecto y mantén una estructura organizada.
+
+2. CONCEPTO DEL PROYECTO
+
+TripCanvas será una plataforma web para crear automáticamente tarjetas informativas y contenido visual sobre destinos turísticos, inicialmente enfocado en Perú.
+
+El usuario podrá:
+
+Seleccionar un destino turístico.
+Elegir un tipo de contenido.
+Indicar cuántas tarjetas quiere generar.
+Utilizar Google Gemini para generar el contenido.
+Revisar y editar el contenido.
+Seleccionar una plantilla visual.
+Personalizar colores, tipografías, imágenes y elementos.
+Ver una previsualización en tiempo real.
+Exportar las tarjetas como PNG/JPG.
+Generar varias tarjetas y descargarlas juntas.
+Guardar proyectos para editarlos posteriormente.
+
+La aplicación debe sentirse como una mezcla entre:
+
+Canva
+un generador de contenido con IA
+un editor de tarjetas para redes sociales
+una herramienta especializada en turismo
+
+Pero no debe copiar visualmente ninguna de estas plataformas.
+
+3. OBJETIVO PRINCIPAL
+
+Crear una herramienta que permita pasar de:
+
+DESTINO + TIPO DE CONTENIDO
+
+a:
+
+CONTENIDO GENERADO POR IA → DISEÑO AUTOMÁTICO → EDICIÓN → EXPORTACIÓN
+
+Ejemplo:
+
+Usuario:
+
+Destino:
+"Machu Picchu"
+
+Categoría:
+"Dato curioso"
+
+Cantidad:
+"10"
+
+Idioma:
+"Español"
+
+El sistema debe generar automáticamente 10 contenidos diferentes y convertirlos en 10 tarjetas visuales.
+
+4. STACK TECNOLÓGICO
+
+Utiliza una arquitectura web moderna pero sencilla de mantener.
+
+Frontend
+
+Preferentemente:
+
+HTML5
+CSS3
+JavaScript moderno
+
+Si el proyecto se beneficia claramente de un framework, puedes utilizar:
+
+React
+Vite
+
+Pero evita introducir frameworks innecesarios.
+
+Backend
+
+Python con:
+
+FastAPI
+IA
+
+Google Gemini API.
+
+La integración con Gemini debe estar aislada en un módulo independiente.
+
+Nunca colocar la API KEY directamente en el frontend.
+
+Utilizar:
+
+.env
+
+Ejemplo:
+
+GEMINI_API_KEY=...
+
+5. ESTRUCTURA PROPUESTA
+
+Organiza el proyecto aproximadamente así:
+
+tripcanvas/
+
+backend/
+
+main.py
+
+config.py
+
+gemini/
+client.py
+prompts.py
+content_generator.py
+
+api/
+destinations.py
+generation.py
+projects.py
+export.py
+
+models/
+content.py
+destination.py
+project.py
+
+services/
+image_service.py
+export_service.py
+validation_service.py
+
+database/
+database.py
+
+frontend/
+
+index.html
+
+css/
+main.css
+dashboard.css
+editor.css
+components.css
+cards.css
+
+js/
+app.js
+api.js
+editor.js
+generator.js
+templates.js
+preview.js
+export.js
+
+templates/
+
+dato-curioso/
+mito-realidad/
+quiz/
+comparativa/
+guia-destino/
+historia/
+lista-datos/
+
+assets/
+
+fonts/
+icons/
+images/
+
+data/
+
+destinations.json
+categories.json
+
+output/
+
+6. DISEÑO GENERAL DE LA APLICACIÓN
+
+La interfaz debe tener apariencia de aplicación SaaS moderna.
+
+No quiero una interfaz genérica de administración.
+
+Debe ser:
+
+moderna
+elegante
+limpia
+visual
+rápida
+intuitiva
+profesional
+enfocada en creación de contenido
+
+Utilizar:
+
+bordes redondeados
+sombras suaves
+tarjetas
+paneles
+microinteracciones
+estados hover
+transiciones suaves
+buena jerarquía tipográfica
+suficiente espacio en blanco
+
+Evitar:
+
+exceso de colores
+interfaces saturadas
+botones gigantes
+gradientes excesivos
+apariencia de dashboard empresarial antiguo
+7. IDENTIDAD VISUAL
+
+Nombre:
+
+TRIPCANVAS
+
+Concepto visual:
+
+"El lienzo para crear contenido de viajes."
+
+La interfaz debe utilizar una estética relacionada con:
+
+viajes
+mapas
+fotografía
+exploración
+destinos
+creatividad
+
+Utilizar inicialmente una paleta sobria y profesional.
+
+Permitir que posteriormente los colores puedan configurarse.
+
+8. DASHBOARD PRINCIPAL
+
+Crear un dashboard inicial.
+
+Debe mostrar:
+
+Header
+
+Logo:
+
+TripCanvas
+
+Subtítulo:
+
+AI Travel Content Studio
+
+Menú:
+
+Inicio
+Crear
+Proyectos
+Plantillas
+Destinos
+Configuración
+Dashboard
+
+Mostrar:
+
+Crear nuevo contenido
+
+Botón principal:
+
+"Crear tarjeta"
+
+Generación rápida
+
+Formulario:
+
+Destino
+
+Tipo de contenido
+
+Cantidad
+
+Idioma
+
+Botón:
+
+"Generar con IA"
+
+Proyectos recientes
+
+Mostrar las últimas creaciones.
+
+Cada proyecto debe mostrar:
+
+miniatura
+nombre
+destino
+fecha
+cantidad de tarjetas
+botón editar
+9. EDITOR PRINCIPAL
+
+El editor es la parte más importante de la aplicación.
+
+Crear una interfaz de tres columnas.
+
+IZQUIERDA
+
+Panel de contenido.
+
+Opciones:
+
+Destino
+
+Input/select:
+
+Machu Picchu
+
+Categoría
+
+Dropdown:
+
+Dato curioso
+¿Sabías que?
+Historia
+Mito vs realidad
+Quiz
+Comparativa
+Guía rápida
+5 datos
+Consejos
+Cultura
+Arquitectura
+Naturaleza
+Cómo llegar
+Mejor época
+Información general
+Cantidad
+
+1–20 tarjetas.
+
+Idioma
+Español
+Inglés
+Portugués
+Botón
+
+"✨ Generar con Gemini"
+
+10. PANEL CENTRAL
+
+Debe mostrar la tarjeta en tamaño realista.
+
+La tarjeta debe estar construida con:
+
+HTML + CSS.
+
+NO convertir la tarjeta en una imagen durante la edición.
+
+La preview debe ser HTML real.
+
+Ejemplo:
+
+<div class="travel-card">
+    ...
+</div>
+
+Esto permitirá modificar elementos en tiempo real.
+
+11. PANEL DERECHO
+
+Panel de diseño.
+
+Opciones:
+
+Plantilla
+Modern Travel
+Editorial
+Minimal
+Explorer
+Luxury
+Andes
+Photo Focus
+Formato
+Instagram Portrait 1080x1350
+Square 1080x1080
+Story 1080x1920
+Tipografía
+
+Permitir seleccionar diferentes fuentes.
+
+Colores
+fondo
+texto
+acento
+overlay
+Imagen
+subir imagen
+cambiar imagen
+eliminar imagen
+Overlay
+
+Control de opacidad.
+
+Logo
+
+Activar/desactivar.
+
+12. SISTEMA DE PLANTILLAS
+
+Crear un sistema modular.
+
+No crear una sola plantilla gigante.
+
+Cada plantilla debe ser independiente.
+
+Ejemplo:
+
+templates/
+
+dato-curioso/
+
+template.html
+template.css
+config.json
+
+Cada plantilla debe definir:
+
+estructura
+posiciones
+tamaños
+tipografías
+colores
+componentes
+13. COMPONENTES VISUALES
+
+Crear componentes reutilizables:
+
+Background
+Image
+Gradient Overlay
+Badge
+Title
+Subtitle
+Body
+Statistic
+Icon
+Logo
+Footer
+Source
+Location
+Altitude
+Number
+Question
+Answer
+
+Las plantillas deben combinar estos componentes.
+
+14. TIPOS DE TARJETAS
+
+Crear inicialmente estas plantillas:
+
+1. DATO CURIOSO
+
+Diseño:
+
+Imagen grande.
+
+Etiqueta:
+
+DATO CURIOSO
+
+Título llamativo.
+
+Texto corto.
+
+Destino al pie.
+
+2. ¿SABÍAS QUE?
+
+Pregunta grande.
+
+Imagen.
+
+Respuesta breve.
+
+3. MITO VS REALIDAD
+
+Dividir visualmente:
+
+MITO
+
+REALIDAD
+
+4. QUIZ
+
+Pregunta.
+
+4 respuestas.
+
+El usuario puede posteriormente crear una segunda tarjeta con la respuesta.
+
+5. 5 DATOS
+
+Número grande.
+
+Lista de 5 datos.
+
+6. GUÍA RÁPIDA
+
+Mostrar:
+
+📍 ubicación
+
+⛰️ altitud
+
+📅 mejor época
+
+🚶 dificultad
+
+⏱️ duración
+
+7. HISTORIA
+
+Diseño editorial.
+
+Fecha.
+
+Título.
+
+Historia breve.
+
+8. COMPARATIVA
+
+Dos destinos o conceptos.
+
+Mostrar:
+
+ubicación
+altitud
+dificultad
+duración
+atractivo principal
+15. GEMINI
+
+Gemini debe utilizarse principalmente para generar contenido estructurado.
+
+NO pedirle que genere HTML.
+
+NO pedirle que genere CSS.
+
+NO permitir que controle directamente el diseño.
+
+Gemini solamente devuelve datos.
+
+16. FORMATO DE RESPUESTA DE GEMINI
+
+La respuesta debe ser JSON válido.
+
+Ejemplo:
+
+{
+"destination": "Machu Picchu",
+"cards": [
+{
+"type": "dato_curioso",
+"title": "¿Sabías que Machu Picchu permaneció oculta durante siglos?",
+"body": "La ciudadela permaneció prácticamente desconocida para el mundo exterior durante siglos.",
+"facts": [],
+"location": "Cusco, Perú",
+"altitude": "2430 m s. n. m.",
+"source": "UNESCO"
+}
+]
+}
+
+Nunca depender del texto libre para procesar la respuesta.
+
+17. PROMPT DE GEMINI
+
+Crear prompts especializados por categoría.
+
+Por ejemplo:
+
+"DATO CURIOSO"
+
+Gemini debe:
+
+generar información interesante
+evitar clichés
+evitar información inventada
+utilizar lenguaje claro
+escribir para redes sociales
+evitar párrafos largos
+priorizar datos verificables
+evitar repetir información
+
+El contenido debe estar pensado para captar atención rápidamente.
+
+18. VALIDACIÓN
+
+Antes de mostrar el contenido:
+
+validar:
+
+JSON válido
+campos requeridos
+longitud del título
+longitud del cuerpo
+ausencia de contenido vacío
+ausencia de duplicados
+
+Si Gemini devuelve información inválida:
+
+hacer una segunda solicitud de corrección.
+
+19. DATOS TURÍSTICOS
+
+Crear inicialmente un archivo:
+
+data/destinations.json
+
+con destinos turísticos del Perú.
+
+Incluir inicialmente:
+
+Machu Picchu
+Cusco
+Valle Sagrado
+Ollantaytambo
+Pisac
+Moray
+Maras
+Laguna Humantay
+Vinicunca
+Palccoyo
+Choquequirao
+Camino Inca
+Salkantay
+Lago Titicaca
+Arequipa
+Cañón del Colca
+Paracas
+Huacachina
+Líneas de Nazca
+Kuelap
+
+La estructura debe permitir agregar fácilmente más destinos.
+
+20. IMÁGENES
+
+Crear un sistema de imágenes desacoplado.
+
+Cada contenido puede tener:
+
+image_query
+
+Ejemplo:
+
+"Machupicchu Peru archaeological site"
+
+La tarjeta debe permitir:
+
+imagen automática
+subir imagen
+cambiar imagen
+eliminar imagen
+
+No bloquear el sistema si todavía no existe un proveedor automático de imágenes.
+
+Crear una interfaz para conectar posteriormente un servicio de imágenes.
+
+21. EDICIÓN MANUAL
+
+Después de generar contenido, el usuario debe poder editar:
+
+título
+descripción
+datos
+etiquetas
+ubicación
+altitud
+fuente
+
+Los cambios deben actualizar inmediatamente la preview.
+
+22. EDICIÓN VISUAL
+
+Permitir cambiar:
+
+posición
+tamaño
+alineación
+tamaño de fuente
+peso de fuente
+color
+opacidad
+imagen
+overlay
+
+No es necesario crear inicialmente un editor tan complejo como Canva.
+
+Primero crear controles simples y robustos.
+
+23. GENERACIÓN MASIVA
+
+Si el usuario selecciona:
+
+Destino:
+Machu Picchu
+
+Categoría:
+Dato curioso
+
+Cantidad:
+10
+
+Gemini debe generar 10 contenidos diferentes.
+
+Mostrar:
+
+Tarjeta 1 / 10
+
+con navegación:
+
+← anterior
+
+siguiente →
+
+También permitir:
+
+"Generar todas"
+
+24. EXPORTACIÓN
+
+Crear exportación a:
+
+PNG
+
+JPG
+
+El tamaño exportado debe ser exactamente el formato seleccionado.
+
+Por ejemplo:
+
+1080 × 1350.
+
+La exportación debe utilizar el HTML/CSS renderizado.
+
+Preferentemente utilizar Playwright o una tecnología equivalente en backend.
+
+25. EXPORTACIÓN MASIVA
+
+Agregar:
+
+"Descargar todas"
+
+Debe generar:
+
+tripcanvas_machu_picchu.zip
+
+Dentro:
+
+01_dato_curioso.png
+02_dato_curioso.png
+03_dato_curioso.png
+...
+
+También generar:
+
+copy.txt
+
+con los textos correspondientes.
+
+26. COPY PARA REDES SOCIALES
+
+Además de las tarjetas, Gemini debe poder generar un copy para:
+
+Instagram
+Facebook
+TikTok
+YouTube Shorts
+
+El copy debe ser independiente de la tarjeta.
+
+Permitir copiarlo con un botón:
+
+"Copiar copy"
+
+27. PROYECTOS
+
+Permitir guardar proyectos.
+
+Cada proyecto:
+
+{
+"id": "...",
+"name": "...",
+"destination": "...",
+"cards": [],
+"template": "...",
+"format": "...",
+"created_at": "...",
+"updated_at": "..."
+}
+
+El usuario debe poder:
+
+crear
+editar
+duplicar
+eliminar
+abrir
+28. BASE DE DATOS
+
+Para la primera versión utilizar SQLite.
+
+Crear tablas para:
+
+destinations
+
+projects
+
+cards
+
+templates
+
+settings
+
+La arquitectura debe permitir migrar posteriormente a PostgreSQL.
+
+29. API
+
+Crear endpoints claros.
+
+Ejemplo:
+
+POST /api/generate
+
+POST /api/projects
+
+GET /api/projects
+
+GET /api/projects/{id}
+
+PUT /api/projects/{id}
+
+DELETE /api/projects/{id}
+
+POST /api/export
+
+GET /api/destinations
+
+GET /api/templates
+
+30. EXPERIENCIA DEL USUARIO
+
+La generación debe mostrar estados.
+
+Ejemplo:
+
+"Preparando contenido..."
+
+"Consultando Gemini..."
+
+"Generando tarjetas..."
+
+"Preparando diseño..."
+
+"Listo."
+
+Utilizar loaders y feedback visual.
+
+Nunca dejar al usuario mirando una pantalla sin saber qué está pasando.
+
+31. MANEJO DE ERRORES
+
+Crear mensajes claros.
+
+Ejemplos:
+
+"Gemini no respondió. Inténtalo nuevamente."
+
+"No se pudo generar el contenido."
+
+"La imagen no pudo cargarse."
+
+"El proyecto no pudo guardarse."
+
+No mostrar errores técnicos directamente al usuario.
+
+Registrar errores técnicos en backend.
+
+32. RESPONSIVE
+
+La aplicación debe funcionar correctamente en:
+
+Desktop
+
+Tablet
+
+Mobile
+
+El editor puede priorizar desktop, pero debe seguir siendo usable en pantallas pequeñas.
+
+33. SEGURIDAD
+
+Nunca exponer:
+
+GEMINI_API_KEY
+
+en JavaScript.
+
+Nunca colocar secretos en:
+
+HTML
+
+CSS
+
+JS
+
+Todos los secretos deben estar en variables de entorno.
+
+Validar los datos recibidos desde frontend.
+
+34. ARQUITECTURA
+
+Mantener separación clara entre:
+
+Frontend
+
+Backend
+
+IA
+
+Base de datos
+
+Exportación
+
+Plantillas
+
+Servicios
+
+No mezclar toda la lógica en un único archivo.
+
+Evitar archivos gigantes.
+
+Utilizar funciones pequeñas y reutilizables.
+
+35. CALIDAD DEL CÓDIGO
+
+El código debe ser:
+
+limpio
+legible
+modular
+comentado cuando sea necesario
+reutilizable
+fácil de ampliar
+
+No crear código innecesariamente complejo.
+
+No implementar funcionalidades que todavía no son necesarias.
+
+36. FASE 1 — MVP
+
+Primero implementar únicamente:
+
+Dashboard.
+Selector de destino.
+Selector de categoría.
+Selector de cantidad.
+Integración Gemini.
+Generación JSON.
+Preview HTML/CSS.
+3 plantillas.
+Edición básica del contenido.
+Exportación PNG.
+Guardado de proyecto.
+
+No implementar todavía:
+
+autenticación
+pagos
+publicación automática
+redes sociales
+sistema multiusuario
+PostgreSQL
+funciones empresariales
+37. LAS 3 PRIMERAS PLANTILLAS
+
+Implementar primero:
+
+TEMPLATE 01
+
+"Dato Curioso"
+
+Estilo:
+
+Fotográfico + moderno.
+
+TEMPLATE 02
+
+"5 Datos"
+
+Estilo:
+
+Editorial + informativo.
+
+TEMPLATE 03
+
+"Mito vs Realidad"
+
+Estilo:
+
+Contraste visual.
+
+Las tres deben verse claramente diferentes.
+
+38. PRINCIPIO IMPORTANTE
+
+El contenido y el diseño deben estar completamente separados.
+
+Ejemplo:
+
+Gemini:
+
+{
+"title": "...",
+"body": "..."
+}
+
+Template:
+
+renderCard(data)
+
+La plantilla decide:
+
+dónde aparece el título.
+
+Gemini decide:
+
+qué dice el título.
+
+Nunca mezclar ambas responsabilidades.
+
+39. FLUJO FINAL
+
+El flujo completo debe ser:
+
+Usuario entra a TripCanvas.
+
+↓
+
+Selecciona:
+
+Machu Picchu
+
+↓
+
+Selecciona:
+
+Dato curioso
+
+↓
+
+Selecciona:
+
+10 tarjetas
+
+↓
+
+Presiona:
+
+"Generar con Gemini"
+
+↓
+
+Backend llama a Gemini.
+
+↓
+
+Gemini devuelve JSON.
+
+↓
+
+Backend valida JSON.
+
+↓
+
+Frontend recibe contenido.
+
+↓
+
+Frontend genera las tarjetas HTML.
+
+↓
+
+Usuario revisa.
+
+↓
+
+Usuario puede editar.
+
+↓
+
+Usuario cambia plantilla.
+
+↓
+
+Preview se actualiza.
+
+↓
+
+Usuario presiona:
+
+"Exportar"
+
+↓
+
+Backend renderiza HTML.
+
+↓
+
+Genera PNG 1080×1350.
+
+↓
+
+Usuario descarga.
+
+40. IMPORTANTE SOBRE LA IMPLEMENTACIÓN
+
+No intentes desarrollar todo el proyecto de una sola vez sin verificar cada etapa.
+
+Trabaja por fases.
+
+Primero:
+
+Crear estructura.
+Crear backend.
+Crear frontend.
+Crear dashboard.
+Crear editor.
+Crear sistema de plantillas.
+Crear integración Gemini.
+Crear preview.
+Crear exportación.
+Probar todo.
+
+Después de cada fase:
+
+comprobar que funciona
+corregir errores
+mantener la arquitectura limpia
+continuar con la siguiente fase
+
+No eliminar funcionalidades existentes al agregar nuevas.
+
+41. CRITERIO DE ÉXITO DEL MVP
+
+El MVP estará terminado cuando pueda realizarse este flujo sin intervención manual:
+
+Abrir TripCanvas.
+Seleccionar Machu Picchu.
+Seleccionar "Dato curioso".
+Elegir 5 tarjetas.
+Pulsar "Generar con Gemini".
+Obtener 5 contenidos diferentes.
+Ver las 5 tarjetas en HTML.
+Cambiar de plantilla.
+Editar un título.
+Ver el cambio inmediatamente.
+Exportar la tarjeta como PNG 1080×1350.
+Guardar el proyecto.
+Volver a abrir el proyecto.
+42. REGLA FINAL
+
+Antes de escribir código:
+
+Inspecciona el proyecto existente.
+Determina qué estructura ya existe.
+No sobrescribas archivos innecesariamente.
+Reutiliza componentes cuando sea posible.
+Explica brevemente qué vas a implementar.
+Implementa la primera fase.
+Ejecuta pruebas.
+Corrige errores.
+Continúa progresivamente.
+
+El objetivo no es crear simplemente una página bonita.
+
+El objetivo es crear una herramienta web funcional, modular y escalable para generar contenido turístico visual mediante IA, donde HTML/CSS/JS controlen completamente el diseño y Gemini se encargue principalmente de la generación del contenido.

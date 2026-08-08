@@ -1,0 +1,97 @@
+/* TEMPLATE: 5 Datos — Editorial + informativo */
+.travel-card {
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 96px 88px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cd-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.cd-label {
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  letter-spacing: 0.2em;
+  padding: 10px 24px;
+  border-radius: 10px;
+}
+
+.cd-destination {
+  font-size: calc(var(--tc-text-scale) * 30px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.cd-title {
+  font-size: calc(var(--tc-text-scale) * 72px);
+  font-weight: 800;
+  line-height: 1.08;
+  margin-bottom: 56px;
+  letter-spacing: -0.02em;
+}
+
+.cd-facts {
+  list-style: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.cd-facts li {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 26px;
+}
+
+.cd-facts li:last-child {
+  border-bottom: none;
+}
+
+.fact-num {
+  font-size: calc(var(--tc-text-scale) * 58px);
+  font-weight: 800;
+  color: var(--tc-accent);
+  font-style: italic;
+  min-width: 76px;
+  line-height: 1;
+}
+
+.cd-facts li span:last-child {
+  font-size: calc(var(--tc-text-scale) * 36px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.cd-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.cd-source {
+  font-size: calc(var(--tc-text-scale) * 28px);
+  opacity: 0.75;
+}
+
+.cd-brand {
+  font-size: calc(var(--tc-text-scale) * 28px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--tc-accent);
+}

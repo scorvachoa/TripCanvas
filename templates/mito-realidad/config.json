@@ -1,0 +1,6 @@
+{
+  "name": "Mito vs Realidad",
+  "category": "mito_realidad",
+  "description": "Contraste visual. Divide la tarjeta entre MITO y REALIDAD.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

@@ -1,0 +1,102 @@
+# TripCanvas — AI Travel Content Studio
+
+Herramienta web para crear tarjetas visuales sobre destinos turísticos de Perú usando IA (Google Gemini). El contenido lo genera Gemini; el diseño lo controlan plantillas HTML/CSS independientes.
+
+## Requisitos
+
+- Python 3.11+
+- `curl` disponible en el PATH (se usa para llamar a la API de Gemini)
+- Una clave de API de Google Gemini
+
+## Instalación
+
+```bash
+# 1. Crear entorno virtual e instalar dependencias
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+
+# 2. Instalar el navegador de Playwright (para exportar PNG)
+.venv\Scripts\python -m playwright install chromium
+
+# 3. Configurar la API key
+# Copia .env.example a .env y completa GEMINI_API_KEY (o define la variable de entorno)
+# Para rotación automática ante límites de cuota, añade más claves separadas por coma:
+#   GEMINI_API_KEYS=clave2,clave3
+# Se usa primero GEMINI_API_KEY y luego las de GEMINI_API_KEYS en orden.
+```
+
+## Ejecución
+
+```bash
+# Inicia el backend en http://localhost:8000 (sirve también el frontend)
+.venv\Scripts\python -m uvicorn main:app --app-dir backend --port 8000
+```
+
+Abre `http://localhost:8000` en tu navegador.
+
+## Stack
+
+- **Frontend:** HTML, CSS y JavaScript vanilla (sin frameworks)
+- **Backend:** Python + FastAPI
+- **IA:** Google Gemini (módulo aislado en `backend/gemini/`)
+- **Almacenamiento:** archivos JSON (`data/projects.json`, escritura atómica)
+- **Exportación:** Playwright (renderiza el HTML/CSS real a PNG)
+
+## Estructura
+
+```
+backend/
+  main.py              # FastAPI + monta el frontend
+  config.py            # Configuración desde .env
+  gemini/              # Cliente, prompts y generador de contenido (aislado)
+  api/                 # Endpoints: generation, projects, export
+  models/              # Modelos Pydantic (content, destination, project)
+  services/            # image, export, validation, template, json_storage
+  database/            # SQLite (sustituida por JSON en data/projects.json)
+frontend/
+  index.html, css/, js/
+templates/             # Plantillas independientes (html + css + config.json)
+  dato-curioso/        # Fotográfico + moderno
+  cinco-datos/         # Editorial + informativo
+  mito-realidad/       # Contraste visual
+data/                  # destinations.json, categories.json, projects.json
+scripts/               # Utilidades de desarrollo y pruebas
+output/                # Exportaciones generadas
+```
+
+## API principal
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/generate` | Genera contenido con Gemini (JSON validado) |
+| GET | `/api/destinations` | Lista destinos |
+| GET | `/api/categories` | Lista categorías |
+| GET | `/api/templates` | Lista plantillas |
+| GET | `/api/templates/{id}` | HTML/CSS de una plantilla |
+| POST | `/api/projects` | Crear proyecto |
+| GET | `/api/projects` | Listar proyectos |
+| GET | `/api/projects/{id}` | Obtener proyecto |
+| PUT | `/api/projects/{id}` | Actualizar proyecto |
+| DELETE | `/api/projects/{id}` | Eliminar proyecto |
+| POST | `/api/export` | Exportar una tarjeta a PNG (1080×1350 por defecto) |
+| POST | `/api/export/all` | Exportar ZIP con PNGs + `copy.txt` |
+
+## Notas de implementación
+
+- Gemini solo devuelve **datos JSON**; nunca HTML/CSS. Contenido y diseño están separados.
+- La preview del editor es HTML/CSS real (no una imagen), por lo que la edición se ve en tiempo real.
+- Los formatos soportados: Instagram Portrait (1080×1350), Square (1080×1080), Story (1080×1920).
+- La exportación usa el HTML renderizado con las plantillas exactamente al tamaño seleccionado.
+
+## Pruebas
+
+```bash
+# E2E del frontend (requiere servidor corriendo)
+.venv\Scripts\python scripts\e2e_test.py
+
+# Flujo completo real (Gemini -> proyecto -> exportación)
+.venv\Scripts\python scripts\full_flow_test.py
+
+# Prueba de exportación
+.venv\Scripts\python scripts\export_test.py
+```

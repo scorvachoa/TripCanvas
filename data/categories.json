@@ -1,0 +1,92 @@
+[
+  {
+    "id": "dato_curioso",
+    "name": "Dato curioso",
+    "template": "dato-curioso",
+    "description": "Información interesante y poco conocida"
+  },
+  {
+    "id": "sabias_que",
+    "name": "¿Sabías que?",
+    "template": "dato-curioso",
+    "description": "Pregunta llamativa con respuesta breve"
+  },
+  {
+    "id": "historia",
+    "name": "Historia",
+    "template": "dato-curioso",
+    "description": "Relato breve con fecha"
+  },
+  {
+    "id": "mito_realidad",
+    "name": "Mito vs realidad",
+    "template": "mito-realidad",
+    "description": "Contraste entre creencia y dato real"
+  },
+  {
+    "id": "quiz",
+    "name": "Quiz",
+    "template": "dato-curioso",
+    "description": "Pregunta con 4 opciones"
+  },
+  {
+    "id": "comparativa",
+    "name": "Comparativa",
+    "template": "cinco-datos",
+    "description": "Comparación entre dos conceptos"
+  },
+  {
+    "id": "guia_rapida",
+    "name": "Guía rápida",
+    "template": "cinco-datos",
+    "description": "Datos prácticos del destino"
+  },
+  {
+    "id": "cinco_datos",
+    "name": "5 datos",
+    "template": "cinco-datos",
+    "description": "Lista numerada de 5 datos"
+  },
+  {
+    "id": "consejos",
+    "name": "Consejos",
+    "template": "cinco-datos",
+    "description": "Consejos prácticos para viajeros"
+  },
+  {
+    "id": "cultura",
+    "name": "Cultura",
+    "template": "dato-curioso",
+    "description": "Tradiciones, costumbres y gastronomía"
+  },
+  {
+    "id": "arquitectura",
+    "name": "Arquitectura",
+    "template": "dato-curioso",
+    "description": "Estilos y técnicas constructivas"
+  },
+  {
+    "id": "naturaleza",
+    "name": "Naturaleza",
+    "template": "dato-curioso",
+    "description": "Fauna, flora y paisajes"
+  },
+  {
+    "id": "como_llegar",
+    "name": "Cómo llegar",
+    "template": "cinco-datos",
+    "description": "Rutas y transportes"
+  },
+  {
+    "id": "mejor_epoca",
+    "name": "Mejor época",
+    "template": "cinco-datos",
+    "description": "Estaciones y clima ideal"
+  },
+  {
+    "id": "informacion_general",
+    "name": "Información general",
+    "template": "dato-curioso",
+    "description": "Qué es y dónde está"
+  }
+]

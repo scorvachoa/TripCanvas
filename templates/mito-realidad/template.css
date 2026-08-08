@@ -1,0 +1,93 @@
+/* TEMPLATE: Mito vs Realidad — Contraste visual */
+.travel-card {
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 80px 72px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mr-badge {
+  align-self: flex-start;
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  letter-spacing: 0.18em;
+  padding: 12px 24px;
+  border-radius: 10px;
+  margin-bottom: 36px;
+}
+
+.mr-title {
+  font-size: calc(var(--tc-text-scale) * 60px);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 48px;
+  letter-spacing: -0.02em;
+}
+
+.mr-split {
+  flex: 1;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.mr-side {
+  flex: 1;
+  padding: 44px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mr-myth {
+  background: linear-gradient(160deg, #4a2c5c 0%, #2b1b3d 100%);
+}
+
+.mr-reality {
+  background: linear-gradient(160deg, #0f3d3a 0%, #0a2a28 100%);
+}
+
+.mr-divider {
+  width: 6px;
+  background: var(--tc-accent);
+  flex-shrink: 0;
+}
+
+.mr-tag {
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 34px);
+  letter-spacing: 0.14em;
+}
+
+.mr-tag-myth { color: #ff9f9f; }
+.mr-tag-reality { color: #7dffcb; }
+
+.mr-text {
+  font-size: calc(var(--tc-text-scale) * 34px);
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.mr-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  font-weight: 600;
+}
+
+.mr-footer span:first-child {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+}
+
+.mr-source {
+  opacity: 0.7;
+  font-weight: 500;
+}
