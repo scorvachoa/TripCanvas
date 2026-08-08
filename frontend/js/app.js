@@ -16,15 +16,26 @@ const App = {
   _toastTimer: null,
 
   async init() {
-    this.setupNav();
-    this.setupEditorButtons();
-    await Generator.init();
-    Editor.init();
-    await this.renderTemplates();
-    await this.renderDestinations();
-    this.loadRecentProjects();
-    await this.setupTemplateSelect();
-    this.show('dashboard');
+    try {
+      this.setupNav();
+      this.setupEditorButtons();
+      await Generator.init();
+      Editor.init();
+      await this.renderTemplates();
+      await this.renderDestinations();
+      this.loadRecentProjects();
+      await this.setupTemplateSelect();
+      this.show('dashboard');
+    } catch (err) {
+      console.error('Error al iniciar la aplicación:', err);
+      const target = document.getElementById('view-dashboard');
+      if (target) target.classList.remove('hidden');
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
+        toast.className = 'toast show error';
+      }
+    }
   },
 
   setupNav() {
@@ -44,6 +55,12 @@ const App = {
     document.getElementById('modal-close').addEventListener('click', () => Editor.hideModal());
     document.getElementById('modal-cancel').addEventListener('click', () => Editor.hideModal());
     document.getElementById('modal-save').addEventListener('click', () => Editor.save());
+    window.addEventListener('beforeunload', (e) => {
+      if (this.state && this.state._dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
     window.addEventListener('resize', () => {
       if (document.getElementById('view-editor').classList.contains('hidden') === false) {
         fitPreview();
@@ -67,6 +84,11 @@ const App = {
   },
 
   show(view) {
+    const inEditor = !document.getElementById('view-editor').classList.contains('hidden');
+    if (inEditor && view !== 'editor' && this.state._dirty) {
+      if (!confirm('Tienes cambios sin guardar. ¿Salir de todos modos?')) return;
+    }
+
     document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
     const target = document.getElementById('view-' + view);
     if (target) target.classList.remove('hidden');
@@ -77,19 +99,32 @@ const App = {
 
     if (view === 'editor') {
       Editor.enter();
-    } else if (view === 'projects') {
-      this.loadProjects();
-    } else if (view === 'dashboard') {
-      this.loadRecentProjects();
+    } else {
+      clearPreviewStyles();
+      if (view === 'projects') {
+        this.loadProjects();
+      } else if (view === 'dashboard') {
+        this.loadRecentProjects();
+      }
     }
   },
 
-  openEditor(payload) {
+  async openEditor(payload) {
+    let template = payload.template || this.state.template || 'dato-curioso';
+    if (!payload.template) {
+      try {
+        const cats = await API.categories.list();
+        const match = cats.find((c) => c.id === payload.category);
+        if (match && match.template) template = match.template;
+      } catch (err) {
+        console.warn('No se pudo resolver la plantilla por categoría:', err);
+      }
+    }
     this.state = {
       destination: payload.destination || '',
       category: payload.category || 'dato_curioso',
       cards: payload.cards || [],
-      template: payload.template || this.state.template || 'dato-curioso',
+      template,
       format: payload.format || this.state.format || 'instagram_portrait',
       projectId: payload.projectId || null,
       projectName: payload.projectName || 'Proyecto nuevo',
@@ -151,7 +186,7 @@ const App = {
     }
   },
 
-  renderProjectCard(project, recentOnly) {
+  renderProjectCard(project) {
     const div = document.createElement('div');
     div.className = 'project-card';
     const date = project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '';
@@ -195,7 +230,7 @@ const App = {
         grid.innerHTML = '<div class="empty-state">Aún no tienes proyectos. ¡Crea tu primera tarjeta!</div>';
         return;
       }
-      for (const p of projects) grid.appendChild(this.renderProjectCard(p, false));
+      for (const p of projects) grid.appendChild(this.renderProjectCard(p));
     } catch (err) {
       grid.innerHTML = `<div class="empty-state">${esc(err.message)}</div>`;
     }
@@ -210,7 +245,7 @@ const App = {
         grid.innerHTML = '<div class="empty-state">Sin proyectos aún. Genera tu primer contenido.</div>';
         return;
       }
-      for (const p of projects.slice(0, 4)) grid.appendChild(this.renderProjectCard(p, true));
+      for (const p of projects.slice(0, 4)) grid.appendChild(this.renderProjectCard(p));
     } catch (err) {
       grid.innerHTML = `<div class="empty-state">${esc(err.message)}</div>`;
     }

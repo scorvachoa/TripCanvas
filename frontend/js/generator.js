@@ -114,7 +114,7 @@ const Generator = {
 
       const result = await API.generate({ destination, category, count, language });
       this.clearStatus(statusId);
-      App.openEditor({
+      await App.openEditor({
         destination: result.destination || destination,
         cards: result.cards || [],
         category,

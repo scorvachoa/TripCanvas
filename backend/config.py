@@ -15,15 +15,20 @@ def _get(key: str, default: str = "") -> str:
 GEMINI_API_KEY = _get("GEMINI_API_KEY")
 GEMINI_MODEL = _get("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Múltiples claves separadas por coma (rotación automática ante 429/quota).
-# Se combina con GEMINI_API_KEY si esta también está definida.
-GEMINI_API_KEYS = [
-    k.strip()
-    for k in _get("GEMINI_API_KEYS").split(",")
-    if k.strip() and k.strip() != "your_gemini_api_key_here"
-]
-if GEMINI_API_KEY and GEMINI_API_KEY not in GEMINI_API_KEYS:
-    GEMINI_API_KEYS.insert(0, GEMINI_API_KEY)
+# Claves adicionales numeradas (GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...) para
+# rotación automática ante 429/quota. Se usa primero GEMINI_API_KEY y luego
+# las numeradas en orden ascendente.
+GEMINI_API_KEYS: list[str] = []
+if GEMINI_API_KEY:
+    GEMINI_API_KEYS.append(GEMINI_API_KEY)
+_index = 1
+while True:
+    numbered = _get(f"GEMINI_API_KEY_{_index}")
+    if not numbered:
+        break
+    if numbered != "your_gemini_api_key_here":
+        GEMINI_API_KEYS.append(numbered)
+    _index += 1
 
 OUTPUT_DIR = BASE_DIR / _get("OUTPUT_DIR", "output")
 DATA_DIR = BASE_DIR / "data"

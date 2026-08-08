@@ -20,6 +20,7 @@ const Editor = {
     document.getElementById('e-facts').addEventListener('input', () => this.onFactsInput());
     document.getElementById('e-destination').addEventListener('input', (e) => {
       App.state.destination = e.target.value;
+      this.markDirty();
       this.rerender();
     });
     document.getElementById('e-category').addEventListener('change', (e) => {
@@ -28,6 +29,7 @@ const Editor = {
 
     document.getElementById('d-template').addEventListener('change', async (e) => {
       App.state.template = e.target.value;
+      this.markDirty();
       await this.syncTemplateSelect();
       await renderPreview();
     });
@@ -38,11 +40,9 @@ const Editor = {
 
     for (const id of ['d-bg', 'd-text', 'd-accent', 'd-overlay', 'd-font', 'd-logo', 'd-text-scale']) {
       document.getElementById(id).addEventListener('input', () => this.onDesignInput(id));
-      document.getElementById(id).addEventListener('change', () => this.onDesignInput(id));
     }
 
     document.getElementById('d-image').addEventListener('input', () => this.onImageInput());
-    document.getElementById('d-image').addEventListener('change', () => this.onImageInput());
 
     document.getElementById('d-image-file').addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -70,9 +70,9 @@ const Editor = {
   async regenerateCategory(category) {
     if (category === App.state.category) return;
     App.state.category = category;
-    const templates = await TemplateStore.loadList();
-    const match = templates.find((t) => t.category === category);
-    if (match) App.state.template = match.id;
+    const cats = await API.categories.list();
+    const match = cats.find((c) => c.id === category);
+    if (match && match.template) App.state.template = match.template;
     await this.syncTemplateSelect();
     App.state.currentIndex = 0;
     this.updateCounter();
@@ -86,6 +86,7 @@ const Editor = {
     const card = App.state.cards[App.state.currentIndex];
     if (!card) return;
     card[field[1]] = e.target.value;
+    this.markDirty();
     this.rerender();
   },
 
@@ -93,6 +94,7 @@ const Editor = {
     const card = App.state.cards[App.state.currentIndex];
     if (!card) return;
     card.facts = this.factsFromLines(document.getElementById('e-facts').value);
+    this.markDirty();
     this.rerender();
   },
 
@@ -126,6 +128,7 @@ const Editor = {
       const v = Math.round((parseFloat(document.getElementById('d-text-scale').value) || 1) * 100);
       document.getElementById('d-text-scale-val').textContent = v + '%';
     }
+    this.markDirty();
     this.rerender();
   },
 
@@ -134,10 +137,20 @@ const Editor = {
     if (!card) return;
     const imgInput = document.getElementById('d-image');
     card.image = imgInput.value || null;
+    this.markDirty();
     this.rerender();
   },
 
+  markDirty() {
+    App.state._dirty = true;
+  },
+
+  clearDirty() {
+    App.state._dirty = false;
+  },
+
   loadCardIntoPanel(card) {
+    if (!card) return;
     for (const [elId, field] of this.FIELD_MAP) {
       document.getElementById(elId).value = card[field] || '';
     }
@@ -149,7 +162,7 @@ const Editor = {
   updateCounter() {
     const total = App.state.cards.length;
     document.getElementById('editor-card-counter').textContent =
-      `Tarjeta ${App.state.currentIndex + 1} / ${total}`;
+      total ? `Tarjeta ${App.state.currentIndex + 1} / ${total}` : 'Sin tarjetas';
   },
 
   nav(dir) {
@@ -162,7 +175,10 @@ const Editor = {
   },
 
   rerender() {
-    renderPreview();
+    if (this._rerenderTimer) clearTimeout(this._rerenderTimer);
+    this._rerenderTimer = setTimeout(() => {
+      renderPreview();
+    }, 60);
   },
 
   async enter() {
@@ -170,7 +186,8 @@ const Editor = {
     await this.syncTemplateSelect();
     document.getElementById('d-format').value = App.state.format;
     document.getElementById('e-category').value = App.state.category;
-    this.loadCardIntoPanel(App.state.cards[App.state.currentIndex]);
+    const card = App.state.cards[App.state.currentIndex];
+    this.loadCardIntoPanel(card);
     await renderPreview();
   },
 
@@ -180,12 +197,10 @@ const Editor = {
     nameInput.value = App.state.projectName || '';
     modal.classList.remove('hidden');
     nameInput.focus();
-    this._pendingSave = true;
   },
 
   hideModal() {
     document.getElementById('modal-overlay').classList.add('hidden');
-    this._pendingSave = false;
   },
 
   async save() {
@@ -209,6 +224,7 @@ const Editor = {
         App.state.projectId = created.id;
       }
       this.hideModal();
+      this.clearDirty();
       App.toast('Proyecto guardado.', 'success');
     } catch (err) {
       App.toast(err.message || 'El proyecto no pudo guardarse.', 'error');

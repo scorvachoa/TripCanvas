@@ -1,4 +1,5 @@
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -34,7 +35,17 @@ class Template:
             self.css = css_path.read_text(encoding="utf-8")
 
 
+_TEMPLATE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def is_safe_template_id(template_id: str) -> bool:
+    """El id debe ser un nombre de carpeta simple (sin rutas ni separadores)."""
+    return bool(template_id) and bool(_TEMPLATE_ID_RE.fullmatch(template_id))
+
+
 def load_template(template_id: str) -> Template | None:
+    if not is_safe_template_id(template_id):
+        return None
     template_dir = TEMPLATES_DIR / template_id
     if not template_dir.exists():
         return None

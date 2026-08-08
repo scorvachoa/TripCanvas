@@ -7,6 +7,14 @@
   flex-direction: column;
 }
 
+.travel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tc-overlay);
+  pointer-events: none;
+}
+
 .mr-badge {
   align-self: flex-start;
   background: var(--tc-accent);

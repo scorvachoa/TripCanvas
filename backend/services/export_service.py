@@ -54,6 +54,21 @@ def _esc(value) -> str:
     return html_module.escape(str(value or ""))
 
 
+_CSS_VALUE_RE = re.compile(r"^[a-zA-Z0-9 #,.()%'\"\x27\x22\-\u00a0]+$")
+
+
+def _css(value) -> str:
+    """Sanitiza un valor destinado a CSS (colores, fuentes, overlay).
+
+    No usa html.escape (rompe las comillas simples de los font-stack).
+    Restringe a caracteres válidos de un valor CSS simple.
+    """
+    raw = str(value or "").strip()
+    if not _CSS_VALUE_RE.match(raw):
+        return ""
+    return raw
+
+
 def _render_facts_list(facts) -> str:
     items = []
     for i, fact in enumerate(facts or []):
@@ -68,11 +83,13 @@ def _render_facts_label_value(facts) -> str:
             label = fact.get("label", "")
             value = fact.get("value", "")
             rows.append(
-                f"<div class='fv-row'><span class='fv-label'>{_esc(label)}</span>"
-                f"<span class='fv-value'>{_esc(value)}</span></div>"
+                f"<li class='fv-row'><span class='fv-label'>{_esc(label)}</span>"
+                f"<span class='fv-value'>{_esc(value)}</span></li>"
             )
         else:
-            rows.append(f"<div class='fv-row'><span class='fv-value'>{_esc(fact)}</span></div>")
+            rows.append(
+                f"<li class='fv-row'><span class='fv-value'>{_esc(fact)}</span></li>"
+            )
     return "\n".join(rows)
 
 
@@ -103,7 +120,7 @@ def _render_items(items) -> str:
 
 def _tokens(card: Card, destination: str, design: dict) -> dict[str, str]:
     extra = card.extra or {}
-    facts_type = "label_value" if isinstance(card.facts[:1], dict) or (card.facts and isinstance(card.facts[0], dict)) else "list"
+    facts_type = "label_value" if (card.facts and isinstance(card.facts[0], dict)) else "list"
     facts_html = (
         _render_facts_label_value(card.facts)
         if facts_type == "label_value"
@@ -111,6 +128,11 @@ def _tokens(card: Card, destination: str, design: dict) -> dict[str, str]:
     )
 
     logo = LOGO_HTML if design.get("showLogo", True) else ""
+
+    image_url = card.image or ""
+    image_style = (
+        f"background-image:url('{_esc(image_url)}')" if image_url else ""
+    )
 
     return {
         "DESTINATION": _esc(destination),
@@ -129,14 +151,14 @@ def _tokens(card: Card, destination: str, design: dict) -> dict[str, str]:
         "FACTS_LABEL_VALUE": facts_html,
         "OPTIONS": _render_options(card.options),
         "ITEMS": _render_items(extra.get("items", [])),
-        "IMAGE": _esc(card.image or ""),
+        "IMAGE": image_style,
         "IMAGE_QUERY": _esc(card.image_query),
         "LOGO": logo,
-        "BG": _esc(design.get("background", DEFAULT_DESIGN["background"])),
-        "TEXT": _esc(design.get("text", DEFAULT_DESIGN["text"])),
-        "ACCENT": _esc(design.get("accent", DEFAULT_DESIGN["accent"])),
-        "OVERLAY": _esc(design.get("overlay", DEFAULT_DESIGN["overlay"])),
-        "FONT": _esc(design.get("font", DEFAULT_DESIGN["font"])),
+        "BG": _css(design.get("background", DEFAULT_DESIGN["background"])),
+        "TEXT": _css(design.get("text", DEFAULT_DESIGN["text"])),
+        "ACCENT": _css(design.get("accent", DEFAULT_DESIGN["accent"])),
+        "OVERLAY": _css(design.get("overlay", DEFAULT_DESIGN["overlay"])),
+        "FONT": _css(design.get("font", DEFAULT_DESIGN["font"])),
     }
 
 
@@ -209,21 +231,23 @@ async def export_card_png(
     destination: str = "",
     format_id: str = "instagram_portrait",
     design: dict | None = None,
+    output_dir: Path | None = None,
 ) -> Path:
     """Genera un PNG de la tarjeta usando Playwright con el HTML renderizado."""
     html_content = render_card_html(
         card, template_id, destination=destination, format_id=format_id, design=design
     )
-    return await _capture_png(html_content, format_id, suffix=card.number or 1)
+    return await _capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
 
 
-async def _capture_png(html_content: str, format_id: str, suffix=1) -> Path:
+async def _capture_png(html_content: str, format_id: str, suffix=1, output_dir: Path | None = None) -> Path:
     from playwright.async_api import async_playwright
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out = output_dir or OUTPUT_DIR
+    out.mkdir(parents=True, exist_ok=True)
     width, height = format_size(format_id)
 
-    file_path = OUTPUT_DIR / f"card_{suffix:02d}.png"
+    file_path = out / f"card_{suffix:02d}.png"
 
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -242,14 +266,16 @@ async def export_cards_zip(
     destination: str = "",
     format_id: str = "instagram_portrait",
     design: dict | None = None,
+    output_dir: Path | None = None,
 ) -> Path:
     """Genera un ZIP con las tarjetas en PNG y un copy.txt con los textos."""
     from playwright.async_api import async_playwright
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out = output_dir or OUTPUT_DIR
+    out.mkdir(parents=True, exist_ok=True)
     width, height = format_size(format_id)
     safe_dest = re.sub(r"[^a-z0-9_]+", "_", destination.lower()).strip("_") or "tripcanvas"
-    zip_path = OUTPUT_DIR / f"tripcanvas_{safe_dest}.zip"
+    zip_path = out / f"tripcanvas_{safe_dest}.zip"
 
     pages: list[tuple[Path, Card]] = []
 
@@ -266,7 +292,7 @@ async def export_cards_zip(
             page = await browser.new_page(viewport={"width": width, "height": height})
             await page.set_content(html_content, wait_until="networkidle")
             element = page.locator(".travel-card")
-            png_path = OUTPUT_DIR / f"_bulk_{i:02d}.png"
+            png_path = out / f"_bulk_{i:02d}.png"
             await element.screenshot(path=str(png_path))
             pages.append((png_path, card))
             await page.close()

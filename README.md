@@ -20,9 +20,10 @@ python -m venv .venv
 
 # 3. Configurar la API key
 # Copia .env.example a .env y completa GEMINI_API_KEY (o define la variable de entorno)
-# Para rotación automática ante límites de cuota, añade más claves separadas por coma:
-#   GEMINI_API_KEYS=clave2,clave3
-# Se usa primero GEMINI_API_KEY y luego las de GEMINI_API_KEYS en orden.
+# Para rotación automática ante límites de cuota, añade más claves numeradas:
+#   GEMINI_API_KEY_1=clave2
+#   GEMINI_API_KEY_2=clave3
+# Se usa primero GEMINI_API_KEY y luego las numeradas en orden.
 ```
 
 ## Ejecución
@@ -39,8 +40,9 @@ Abre `http://localhost:8000` en tu navegador.
 - **Frontend:** HTML, CSS y JavaScript vanilla (sin frameworks)
 - **Backend:** Python + FastAPI
 - **IA:** Google Gemini (módulo aislado en `backend/gemini/`)
-- **Almacenamiento:** archivos JSON (`data/projects.json`, escritura atómica)
-- **Exportación:** Playwright (renderiza el HTML/CSS real a PNG)
+- **Almacenamiento:** archivos JSON (`data/projects.json`, escritura atómica con lock de archivo)
+- **Exportación:** Playwright (renderiza el HTML/CSS real a PNG en un directorio temporal por petición)
+- **Rate limit:** 10 solicitudes de generación por minuto y por IP (en memoria)
 
 ## Estructura
 
@@ -50,8 +52,8 @@ backend/
   config.py            # Configuración desde .env
   gemini/              # Cliente, prompts y generador de contenido (aislado)
   api/                 # Endpoints: generation, projects, export
-  models/              # Modelos Pydantic (content, destination, project)
-  services/            # image, export, validation, template, json_storage
+  models/              # Modelos Pydantic (content, project)
+  services/            # export, validation, template, json_storage, rate_limit
   database/            # SQLite (sustituida por JSON en data/projects.json)
 frontend/
   index.html, css/, js/
@@ -87,6 +89,9 @@ output/                # Exportaciones generadas
 - La preview del editor es HTML/CSS real (no una imagen), por lo que la edición se ve en tiempo real.
 - Los formatos soportados: Instagram Portrait (1080×1350), Square (1080×1080), Story (1080×1920).
 - La exportación usa el HTML renderizado con las plantillas exactamente al tamaño seleccionado.
+- Los `template_id` se validan con regex (`^[a-zA-Z0-9_-]+$`) para evitar path traversal.
+- `projects.json` usa lock de archivo (msvcrt/fcntl) en operaciones de lectura-modificación-escritura; si el JSON se encuentra corrupto se respalda como `projects.corrupt-<timestamp>.json` antes de continuar.
+- El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP (en memoria; se reinicia al reiniciar el servidor).
 
 ## Pruebas
 
@@ -99,4 +104,11 @@ output/                # Exportaciones generadas
 
 # Prueba de exportación
 .venv\Scripts\python scripts\export_test.py
+
+# CRUD de proyectos contra el servidor
+.venv\Scripts\python scripts\json_crud_test.py
 ```
+
+> Los tests requieren el servidor corriendo. Puedes iniciarlo y probarlo en un solo comando
+> (cmd): `scripts\start_server.py 8000` y ejecutar el test; o usar
+> `taskkill /F /IM python.exe` para limpiar procesos huérfanos tras las pruebas.

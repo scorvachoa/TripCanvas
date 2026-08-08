@@ -7,6 +7,14 @@
   flex-direction: column;
 }
 
+.travel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tc-overlay);
+  pointer-events: none;
+}
+
 .cd-top {
   display: flex;
   justify-content: space-between;
@@ -71,6 +79,28 @@
 
 .cd-facts li span:last-child {
   font-size: calc(var(--tc-text-scale) * 36px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.fv-row {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.fv-label {
+  flex-shrink: 0;
+  min-width: 200px;
+  font-size: calc(var(--tc-text-scale) * 30px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tc-accent);
+}
+
+.fv-value {
+  font-size: calc(var(--tc-text-scale) * 34px);
   font-weight: 500;
   line-height: 1.35;
 }

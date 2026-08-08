@@ -44,7 +44,7 @@ const Exporter = {
     try {
       const blob = await API.export.one(this.buildPayload());
       const card = App.state.cards[App.state.currentIndex];
-      const type = (card.type || 'card').replace(/_/g, '_');
+      const type = (card.type || 'card').replace(/_/g, '-');
       const n = String(App.state.currentIndex + 1).padStart(2, '0');
       this.downloadBlob(blob, `${n}_${type}.png`);
       App.toast('Tarjeta exportada como PNG.', 'success');

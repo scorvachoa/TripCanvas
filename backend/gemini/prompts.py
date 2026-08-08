@@ -11,33 +11,34 @@ CATEGORY_GUIDANCE: dict[str, str] = {
         "y evita repetir información entre tarjetas."
     ),
     "sabias_que": (
-        "Genera preguntas tipo '¿Sabías que...?' llamativas. Cada tarjeta: una pregunta "
-        "grande en 'question' y una respuesta breve en 'answer'. Evita clichés y datos inventados."
+        "Genera preguntas tipo '¿Sabías que...?' llamativas. La pregunta va en 'title' "
+        "(y también en 'question'), la respuesta breve en 'body' (y también en 'answer'). "
+        "Evita clichés y datos inventados."
     ),
     "historia": (
         "Genera historias breves con fecha en 'extra.fecha' (formato '1899' o 'Siglo XV'). "
-        "Estilo editorial: título atractivo y texto breve que cuente un momento histórico real. "
+        "Estilo editorial: 'title' atractivo, 'body' que cuente un momento histórico real. "
         "Prioriza datos verificables."
     ),
     "mito_realidad": (
         "Genera pares 'mito' y 'realidad'. El mito es una creencia popular común (puede ser "
         "falsa o exagerada) y la realidad es el dato correcto con base verificable. "
-        "Escribe ambos en lenguaje claro para redes."
+        "Escribe ambos en lenguaje claro para redes. Completa también 'title' y 'body' breves."
     ),
     "quiz": (
-        "Genera una pregunta con 4 opciones ('options'). La respuesta correcta debe estar "
-        "marcada en 'extra.correct_index' (0-3). La explicación breve va en 'answer'. "
-        "Contenido verificable y entretenido."
+        "Genera una pregunta con 4 opciones ('options'). La pregunta va en 'title' "
+        "(y en 'question'), la respuesta correcta marcada en 'extra.correct_index' (0-3) "
+        "y la explicación breve en 'body' (y en 'answer'). Contenido verificable y entretenido."
     ),
     "comparativa": (
         "Genera una comparativa entre dos conceptos/destinos. En 'extra.items' incluye una "
         "lista de objetos con 'label' y 'value' (ej: ubicación, altitud, dificultad, "
-        "duración, atractivo principal). Título en 'title', resumen en 'body'."
+        "duración, atractivo principal). 'title' llamativo, resumen en 'body'."
     ),
     "guia_rapida": (
         "Genera una guía rápida con campos prácticos en 'facts': ubicación, altitud, "
         "mejor época, dificultad y duración. Cada fact es un objeto con 'label' y 'value'. "
-        "Título corto en 'title'."
+        "'title' llamativo y 'body' con un resumen breve."
     ),
     "cinco_datos": (
         "Genera exactamente 5 datos numerados en 'facts' (lista de strings cortos). "
@@ -45,31 +46,33 @@ CATEGORY_GUIDANCE: dict[str, str] = {
     ),
     "consejos": (
         "Genera consejos prácticos y útiles para viajeros en 'facts' (lista de strings cortos). "
-        "Consejos reales, específicos del destino y no genéricos."
+        "Consejos reales, específicos del destino y no genéricos. 'title' llamativo."
     ),
     "cultura": (
         "Genera información sobre la cultura del destino: tradiciones, costumbres, "
-        "gastronomía o festividades. Texto breve en 'body', datos extra en 'facts'."
+        "gastronomía o festividades. Texto breve en 'body', 'title' atractivo, "
+        "datos extra en 'facts'."
     ),
     "arquitectura": (
         "Genera información sobre arquitectura del destino: estilos, técnicas "
-        "constructivas, materiales o detalles destacados. Texto breve en 'body'."
+        "constructivas, materiales o detalles destacados. Texto breve en 'body', "
+        "'title' atractivo."
     ),
     "naturaleza": (
         "Genera información sobre la naturaleza del destino: fauna, flora, paisajes o "
-        "clima. Texto breve en 'body', datos extra en 'facts'."
+        "clima. Texto breve en 'body', 'title' atractivo, datos extra en 'facts'."
     ),
     "como_llegar": (
         "Genera instrucciones claras sobre cómo llegar al destino: rutas, transportes "
-        "y tiempos. En 'facts' lista de objetos con 'label' y 'value'."
+        "y tiempos. En 'facts' lista de objetos con 'label' y 'value'. 'title' llamativo."
     ),
     "mejor_epoca": (
         "Genera información sobre la mejor época para visitar: estaciones, clima, "
-        "eventos. En 'facts' lista de objetos con 'label' y 'value'."
+        "eventos. En 'facts' lista de objetos con 'label' y 'value'. 'title' llamativo."
     ),
     "informacion_general": (
         "Genera información general útil del destino: qué es, dónde está, datos clave. "
-        "Texto breve en 'body', datos en 'facts'."
+        "Texto breve en 'body', 'title' atractivo, datos en 'facts'."
     ),
 }
 
@@ -83,8 +86,8 @@ LANGUAGES: dict[str, str] = {
 SCHEMA_HINT = """Cada tarjeta debe ser un objeto con esta forma:
 {
   "type": "<tipo de contenido>",
-  "title": "título llamativo (máx 70 caracteres)",
-  "body": "texto corto para redes (máx 200 caracteres)",
+  "title": "título llamativo (máx 100 caracteres)",
+  "body": "texto corto para redes (máx 400 caracteres)",
   "facts": ["dato 1", "dato 2", ...],  // o lista de objetos {"label": "...", "value": "..."} si aplica
   "question": "pregunta, si aplica",
   "answer": "respuesta breve, si aplica",
@@ -119,6 +122,7 @@ Idioma de todo el contenido: {lang}
 
 REGLAS:
 - Genera exactamente {count} tarjetas DIFERENTES entre sí.
+- Siempre completa 'title' y 'body' aunque sean breves: son los campos principales que se muestran.
 - {guidance}
 - NO inventes datos. Si no estás seguro, omite el campo.
 - Todo el contenido debe estar en {lang}.

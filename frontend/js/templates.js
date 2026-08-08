@@ -15,10 +15,4 @@ const TemplateStore = {
     this.details[id] = detail;
     return detail;
   },
-
-  async defaultTemplateId() {
-    const list = await this.loadList();
-    if (!list.length) return 'dato-curioso';
-    return list[0].id;
-  },
 };

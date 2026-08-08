@@ -27,9 +27,9 @@ function renderFactsLabelValue(facts) {
   return (facts || [])
     .map((fact) => {
       if (typeof fact === 'object') {
-        return `<div class='fv-row'><span class='fv-label'>${esc(fact.label)}</span><span class='fv-value'>${esc(fact.value)}</span></div>`;
+        return `<li class='fv-row'><span class='fv-label'>${esc(fact.label)}</span><span class='fv-value'>${esc(fact.value)}</span></li>`;
       }
-      return `<div class='fv-row'><span class='fv-value'>${esc(fact)}</span></div>`;
+      return `<li class='fv-row'><span class='fv-value'>${esc(fact)}</span></li>`;
     })
     .join('\n');
 }
@@ -68,6 +68,11 @@ function buildCardHTML(card, template, destination, design) {
     ? `<div class="tc-logo"><span class="tc-logo-mark">✈</span><span class="tc-logo-text">TRIPCANVAS</span></div>`
     : '';
 
+  const imageUrl = card.image || '';
+  const imageStyle = imageUrl
+    ? `background-image:url('${esc(imageUrl)}')`
+    : '';
+
   const tokens = {
     DESTINATION: esc(destination),
     TITLE: esc(card.title),
@@ -85,7 +90,7 @@ function buildCardHTML(card, template, destination, design) {
     FACTS_LABEL_VALUE: factsHtml,
     OPTIONS: renderOptions(card.options),
     ITEMS: renderItems(extra.items),
-    IMAGE: esc(card.image || ''),
+    IMAGE: imageStyle,
     IMAGE_QUERY: esc(card.image_query || ''),
     LOGO: logo,
     BG: esc(design.background),
@@ -129,6 +134,13 @@ function ensureCssEl() {
   return _cssEl;
 }
 
+function clearPreviewStyles() {
+  if (_cssEl && _cssEl.isConnected) {
+    _cssEl.remove();
+  }
+  _cssEl = null;
+}
+
 function ensureCardEl() {
   if (!_cardEl || !_cardEl.isConnected) {
     _cardEl = document.getElementById('preview-card');
@@ -161,15 +173,28 @@ function fitPreview() {
 async function renderPreview() {
   const state = App.state;
   const card = state.cards[state.currentIndex];
-  if (!card) return;
+  const el = ensureCardEl();
+  if (!card) {
+    const { w, h } = currentFormat();
+    el.innerHTML = `<div class="preview-empty" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;box-sizing:border-box;background:#16233b;border-radius:18px;color:#8ea3c0;font-family:Inter,sans-serif;font-size:18px;line-height:1.6;">
+      No hay tarjetas para mostrar.<br>Genera contenido o abre un proyecto en el panel de contenido.
+    </div>`;
+    fitPreview();
+    return;
+  }
 
   const template = await TemplateStore.get(state.template);
   const design = buildDesignFromControls();
 
   ensureCssEl().textContent = `
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .travel-card, .travel-card * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     .travel-card {
+      position: relative;
       --tc-bg: ${design.background};
       --tc-text: ${design.text};
       --tc-accent: ${design.accent};
@@ -203,7 +228,6 @@ async function renderPreview() {
   `;
 
   const html = buildCardHTML(card, template, state.destination, design);
-  const el = ensureCardEl();
   const { w, h } = currentFormat();
   el.innerHTML = `<div style="width:${w}px;height:${h}px">${html}</div>`;
   fitPreview();

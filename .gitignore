@@ -8,6 +8,10 @@ __pycache__/
 
 # Datos de usuario (proyectos guardados en JSON)
 data/projects.json
+# Respaldos automáticos de projects.json corrupto
+data/projects.corrupt-*.json
+# Lock del almacenamiento JSON
+data/*.lock
 
 # Logs
 backend/server.log
