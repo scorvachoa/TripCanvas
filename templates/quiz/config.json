@@ -1,0 +1,6 @@
+{
+  "name": "Quiz",
+  "category": "quiz",
+  "description": "Estilo game show con franjas diagonales y opciones en azulejos.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

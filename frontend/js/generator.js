@@ -1,32 +1,26 @@
-/* ===== Generator: formularios del dashboard / crear ===== */
+/* ===== Generator: formularios de generación (home, crear y editor) ===== */
 
 const Generator = {
-  destinations: [],
   categories: [],
 
   async init() {
-    const [dests, cats] = await Promise.all([
-      API.destinations.list(),
-      API.categories.list(),
-    ]);
-    this.destinations = dests;
+    const cats = await API.categories.list();
     this.categories = cats;
-
-    this.populateSelect('qg-destination', dests.map((d) => d.name));
-    this.populateSelect('c-destination', dests.map((d) => d.name));
-    this.populateDatalist(dests.map((d) => d.name));
 
     this.populateSelect('qg-category', cats.map((c) => ({ value: c.id, label: c.name })));
     this.populateSelect('c-category', cats.map((c) => ({ value: c.id, label: c.name })));
     this.populateSelect('e-category', cats.map((c) => ({ value: c.id, label: c.name })));
 
-    document.getElementById('quick-gen-form').addEventListener('submit', (e) => {
+    this.bindOnSubmit('quick-gen-form', () => this.runQuickGenerate());
+    this.bindOnSubmit('create-form', () => this.runCreateGenerate());
+  },
+
+  bindOnSubmit(formId, handler) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.runQuickGenerate();
-    });
-    document.getElementById('create-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.runCreateGenerate();
+      handler();
     });
   },
 
@@ -47,17 +41,6 @@ const Generator = {
     }
   },
 
-  populateDatalist(items) {
-    const el = document.getElementById('destination-list');
-    if (!el) return;
-    el.innerHTML = '';
-    for (const item of items) {
-      const opt = document.createElement('option');
-      opt.value = item;
-      el.appendChild(opt);
-    }
-  },
-
   setStatus(containerId, message, type) {
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -72,32 +55,30 @@ const Generator = {
     if (el) el.innerHTML = '';
   },
 
-  async runQuickGenerate() {
+  runQuickGenerate() {
     const dest = document.getElementById('qg-destination').value;
     const category = document.getElementById('qg-category').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('qg-count').value || '5', 10), 1), 20);
     const language = document.getElementById('qg-language').value;
-    await this.generate(dest, category, count, language, 'quick-gen-status');
+    this.generate(dest, category, count, language, 'quick-gen-status', 'btn-quick-generate');
   },
 
-  async runCreateGenerate() {
+  runCreateGenerate() {
     const dest = document.getElementById('c-destination').value.trim();
     const category = document.getElementById('c-category').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('c-count').value || '5', 10), 1), 20);
     const language = document.getElementById('c-language').value;
-    await this.generate(dest, category, count, language, 'create-status');
+    this.generate(dest, category, count, language, 'create-status', 'btn-create-generate');
   },
 
-  async generate(destination, category, count, language, statusId) {
+  async generate(destination, category, count, language, statusId, btnId) {
     if (!destination) {
       this.setStatus(statusId, 'Selecciona un destino.', 'error');
       return;
     }
-    const btn = statusId === 'quick-gen-status'
-      ? document.getElementById('btn-quick-generate')
-      : document.getElementById('btn-create-generate');
-    const original = btn.innerHTML;
-    btn.disabled = true;
+    const btn = document.getElementById(btnId);
+    const original = btn ? btn.innerHTML : '';
+    if (btn) btn.disabled = true;
 
     const messages = [
       'Preparando contenido...',
@@ -114,7 +95,7 @@ const Generator = {
 
       const result = await API.generate({ destination, category, count, language });
       this.clearStatus(statusId);
-      await App.openEditor({
+      App.launchEditor({
         destination: result.destination || destination,
         cards: result.cards || [],
         category,
@@ -125,8 +106,10 @@ const Generator = {
     } catch (err) {
       this.setStatus(statusId, err.message || 'No se pudo generar el contenido.', 'error');
     } finally {
-      btn.innerHTML = original;
-      btn.disabled = false;
+      if (btn) {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }
     }
   },
 };

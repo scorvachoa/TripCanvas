@@ -50,7 +50,8 @@ const Editor = {
       const reader = new FileReader();
       reader.onload = async () => {
         App.state.cards[App.state.currentIndex].image = reader.result;
-        document.getElementById('d-image').value = reader.result;
+        document.getElementById('d-image').value = '';
+        this.markDirty();
         await renderPreview();
       };
       reader.readAsDataURL(file);
@@ -59,7 +60,13 @@ const Editor = {
     document.getElementById('btn-prev').addEventListener('click', () => this.nav(-1));
     document.getElementById('btn-next').addEventListener('click', () => this.nav(1));
     document.getElementById('btn-save').addEventListener('click', () => this.askSave());
-    document.getElementById('btn-back').addEventListener('click', () => App.show('dashboard'));
+    document.getElementById('btn-back').addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        location.href = '/';
+      }
+    });
   },
 
   async syncTemplateSelect() {
@@ -246,9 +253,64 @@ const Editor = {
         currentIndex: 0,
         language: 'es',
       };
-      App.show('editor');
+      document.getElementById('editor-project-name').textContent = project.name;
+      await this.enter();
     } catch (err) {
       App.toast(err.message || 'No se pudo abrir el proyecto.', 'error');
     }
+  },
+
+  async bootstrap() {
+    const params = new URLSearchParams(location.search);
+    const projectId = params.get('project');
+    if (projectId) {
+      await this.loadProject(projectId);
+      return;
+    }
+
+    let draft = null;
+    try {
+      const raw = sessionStorage.getItem('tc_draft');
+      if (raw) {
+        draft = JSON.parse(raw);
+        sessionStorage.removeItem('tc_draft');
+      }
+    } catch (err) {
+      console.warn('Borrador inválido:', err);
+    }
+
+    if (draft && Array.isArray(draft.cards) && draft.cards.length) {
+      App.state = {
+        destination: draft.destination || '',
+        category: draft.category || 'dato_curioso',
+        cards: draft.cards,
+        template: draft.template || 'dato-curioso',
+        format: draft.format || 'instagram_portrait',
+        projectId: draft.projectId || null,
+        projectName: draft.projectName || 'Proyecto nuevo',
+        currentIndex: 0,
+        language: draft.language || 'es',
+      };
+      if (draft.cards[0] && !draft.cardType) {
+        App.state.category = draft.category || 'dato_curioso';
+      }
+      document.getElementById('editor-project-name').textContent = App.state.projectName;
+    } else {
+      const template = (draft && draft.template) || params.get('template') || 'dato-curioso';
+      App.state = {
+        destination: '',
+        category: 'dato_curioso',
+        cards: [],
+        template,
+        format: 'instagram_portrait',
+        projectId: null,
+        projectName: draft && draft.projectName ? draft.projectName : 'Proyecto nuevo',
+        currentIndex: 0,
+        language: 'es',
+      };
+      document.getElementById('editor-project-name').textContent = App.state.projectName;
+    }
+
+    await this.enter();
   },
 };

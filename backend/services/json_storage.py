@@ -214,15 +214,3 @@ def delete_project(project_id: str) -> bool:
             return False
         _save_projects(remaining)
         return True
-
-
-def load_destinations() -> list[dict]:
-    path = Path(DATA_DIR) / "destinations.json"
-    if not path.exists():
-        return []
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, OSError) as exc:
-        logger.error("No se pudo leer destinations.json: %s", exc)
-        return []

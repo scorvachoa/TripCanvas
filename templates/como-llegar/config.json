@@ -1,0 +1,6 @@
+{
+  "name": "Cómo llegar",
+  "category": "como_llegar",
+  "description": "Ruta tipo mapa con línea punteada y paradas conectadas.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

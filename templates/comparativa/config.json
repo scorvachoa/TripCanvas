@@ -1,0 +1,6 @@
+{
+  "name": "Comparativa",
+  "category": "comparativa",
+  "description": "Ficha técnica dividida con emblema VS y filas alternadas.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

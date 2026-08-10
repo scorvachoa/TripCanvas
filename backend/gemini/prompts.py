@@ -107,7 +107,6 @@ def build_generation_prompt(
     category: str,
     count: int,
     language: str = "es",
-    destinations_data: str = "",
 ) -> str:
     guidance = CATEGORY_GUIDANCE.get(category, CATEGORY_GUIDANCE["dato_curioso"])
     lang = LANGUAGES.get(language, "Español")
@@ -134,9 +133,6 @@ FORMATO DE LA RESPUESTA (JSON):
   "destination": "{destination}",
   "cards": [ {SCHEMA_HINT} ]
 }}
-
-DATOS DE REFERENCIA DEL DESTINO:
-{destinations_data if destinations_data else "(sin datos adicionales)"}
 """
     return prompt.strip()
 

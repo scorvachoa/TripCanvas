@@ -1,0 +1,129 @@
+/* TEMPLATE: Historia — Crónica editorial serif */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 100px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.travel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 8% 90%, rgba(255, 255, 255, 0.05), transparent 40%),
+    radial-gradient(circle at 95% 5%, rgba(255, 255, 255, 0.04), transparent 38%);
+  pointer-events: none;
+}
+
+.hi-kicker {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.hi-rule {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--tc-accent), transparent);
+}
+
+.hi-label {
+  font-size: calc(var(--tc-text-scale) * 26px);
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  color: var(--tc-accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hi-date {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: calc(var(--tc-text-scale) * 44px);
+  color: var(--tc-accent);
+  margin-bottom: 24px;
+}
+
+.hi-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: calc(var(--tc-text-scale) * 82px);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 44px;
+  letter-spacing: -0.02em;
+}
+
+.hi-ornament {
+  position: relative;
+  width: 150px;
+  height: 22px;
+  margin-bottom: 46px;
+}
+
+.hi-ornament::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 2px;
+  background: var(--tc-accent);
+  opacity: 0.5;
+}
+
+.hi-ornament::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--tc-bg);
+  border: 3px solid var(--tc-accent);
+}
+
+.hi-body {
+  flex: 1;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: calc(var(--tc-text-scale) * 38px);
+  line-height: 1.6;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.hi-body::first-letter {
+  font-size: calc(var(--tc-text-scale) * 96px);
+  font-weight: 800;
+  line-height: 0.8;
+  float: left;
+  padding-right: 14px;
+  color: var(--tc-accent);
+}
+
+.hi-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 3px double rgba(255, 255, 255, 0.18);
+  padding-top: 28px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+}
+
+.hi-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+  font-weight: 700;
+}
+
+.hi-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

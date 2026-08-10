@@ -1,0 +1,132 @@
+/* TEMPLATE: Arquitectura — Plano técnico blueprint */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 92px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.travel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none;
+}
+
+.ar-cross {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.ar-cross-tl { top: 118px; left: 88px; border-top: 3px solid var(--tc-accent); border-left: 3px solid var(--tc-accent); }
+.ar-cross-tr { top: 118px; right: 88px; border-top: 3px solid var(--tc-accent); border-right: 3px solid var(--tc-accent); }
+.ar-cross-bl { bottom: 118px; left: 88px; border-bottom: 3px solid var(--tc-accent); border-left: 3px solid var(--tc-accent); }
+.ar-cross-br { bottom: 118px; right: 88px; border-bottom: 3px solid var(--tc-accent); border-right: 3px solid var(--tc-accent); }
+
+.ar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 44px;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tc-accent);
+  z-index: 1;
+}
+
+.ar-title {
+  font-size: calc(var(--tc-text-scale) * 58px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  margin: 0 0 26px;
+  padding-bottom: 26px;
+  border-bottom: 3px dashed rgba(255, 255, 255, 0.35);
+  z-index: 1;
+}
+
+.ar-body {
+  font-size: calc(var(--tc-text-scale) * 34px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  opacity: 0.92;
+  margin: 0 0 38px;
+  z-index: 1;
+}
+
+.ar-sheet {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.ar-sheet li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 22px;
+  padding: 20px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.24);
+  font-size: calc(var(--tc-text-scale) * 32px);
+}
+
+.ar-sheet li:last-child {
+  border-bottom: none;
+}
+
+.ar-sheet li .fact-num {
+  color: var(--tc-accent);
+  font-weight: 800;
+  margin-right: 20px;
+}
+
+.ar-sheet li .fv-label {
+  font-size: calc(var(--tc-text-scale) * 26px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tc-accent);
+}
+
+.ar-sheet li .fv-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.ar-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  padding-top: 26px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  z-index: 1;
+}
+
+.ar-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tc-accent);
+  font-weight: 700;
+}
+
+.ar-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

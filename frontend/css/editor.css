@@ -1,8 +1,5 @@
 /* ===== Editor de 3 columnas ===== */
 
-.view-editor { padding: 0; max-width: none; }
-.view-editor #app { max-width: none; }
-
 .editor-toolbar {
   display: flex;
   align-items: center;

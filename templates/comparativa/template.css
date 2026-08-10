@@ -1,0 +1,116 @@
+/* TEMPLATE: Comparativa — Ficha técnica con emblema VS */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 96px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cp-emblem {
+  position: absolute;
+  right: 40px;
+  bottom: 80px;
+  font-size: calc(var(--tc-text-scale) * 300px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--tc-accent);
+  opacity: 0.07;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cp-badge {
+  align-self: flex-start;
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  letter-spacing: 0.18em;
+  padding: 12px 26px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  z-index: 1;
+}
+
+.cp-title {
+  font-size: calc(var(--tc-text-scale) * 64px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+  z-index: 1;
+}
+
+.cp-body {
+  font-size: calc(var(--tc-text-scale) * 36px);
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0.9;
+  margin: 0 0 46px;
+  max-width: 90%;
+  z-index: 1;
+}
+
+.cp-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1;
+}
+
+.cp-table .cmp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 26px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 7px solid var(--tc-accent);
+  border-radius: 14px;
+  padding: 24px 32px;
+}
+
+.cp-table .cmp-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cp-table .cmp-label {
+  flex-shrink: 0;
+  min-width: 320px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+}
+
+.cp-table .cmp-value {
+  font-size: calc(var(--tc-text-scale) * 36px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.cp-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid rgba(255, 255, 255, 0.14);
+  padding-top: 26px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  z-index: 1;
+}
+
+.cp-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+  font-weight: 700;
+}
+
+.cp-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

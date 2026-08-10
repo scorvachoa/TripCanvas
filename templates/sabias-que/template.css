@@ -1,0 +1,109 @@
+/* TEMPLATE: ¿Sabías que? — Burbuja de pregunta/respuesta */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 88px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.travel-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.06), transparent 55%);
+  pointer-events: none;
+}
+
+.sq-badge {
+  align-self: flex-start;
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  letter-spacing: 0.18em;
+  padding: 12px 26px;
+  border-radius: 999px;
+  margin-bottom: 40px;
+  z-index: 1;
+}
+
+.sq-question {
+  font-size: calc(var(--tc-text-scale) * 74px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+  padding-bottom: 40px;
+  border-bottom: 8px dashed var(--tc-accent);
+  z-index: 1;
+}
+
+.sq-bubble {
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-left: 10px solid var(--tc-accent);
+  border-radius: 26px;
+  padding: 40px 46px;
+  margin-top: 56px;
+  z-index: 1;
+}
+
+.sq-arrow {
+  position: absolute;
+  top: -16px;
+  left: 84px;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.06);
+  border-left: 2px solid rgba(255, 255, 255, 0.14);
+  border-top: 2px solid rgba(255, 255, 255, 0.14);
+  transform: rotate(45deg);
+}
+
+.sq-answer {
+  font-size: calc(var(--tc-text-scale) * 40px);
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.sq-watermark {
+  position: absolute;
+  right: 30px;
+  bottom: 40px;
+  font-size: calc(var(--tc-text-scale) * 360px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--tc-accent);
+  opacity: 0.08;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sq-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+  padding-top: 28px;
+  font-size: calc(var(--tc-text-scale) * 30px);
+}
+
+.sq-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+  font-weight: 700;
+}
+
+.sq-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

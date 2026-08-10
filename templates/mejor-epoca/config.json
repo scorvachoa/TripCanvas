@@ -1,0 +1,6 @@
+{
+  "name": "Mejor época",
+  "category": "mejor_epoca",
+  "description": "Calendario estacional con anillo, franja de meses y barras.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

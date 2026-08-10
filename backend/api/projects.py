@@ -7,25 +7,9 @@ from fastapi import APIRouter, HTTPException, Query
 from models.content import Card
 from models.project import Project, ProjectCreate, ProjectUpdate
 from services import json_storage
-from services.json_storage import load_destinations
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api", tags=["destinations"])
-
-
-@router.get("/destinations")
-def list_destinations(search: Optional[str] = Query(None)) -> list[dict]:
-    destinations = load_destinations()
-    if search:
-        term = search.lower()
-        destinations = [
-            d
-            for d in destinations
-            if term in (d.get("name", "") or "").lower()
-            or term in (d.get("region", "") or "").lower()
-        ]
-    destinations.sort(key=lambda d: (d.get("name", "") or "").lower())
-    return destinations
+router = APIRouter(prefix="/api", tags=["projects"])
 
 
 @router.get("/categories")

@@ -1,0 +1,277 @@
+/* ===== TripCanvas — Páginas multi-página (layout, hero, footer) ===== */
+
+/* Contenedor de página */
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  flex: 1;
+  width: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main.page { flex: 1; }
+
+/* Cabeceras de página interiores */
+.page-head h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.page-head p {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+/* ===== Hero ===== */
+.hero {
+  padding: 72px 8px 24px;
+  max-width: 820px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 22px;
+}
+
+.hero-badge .status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+}
+
+.hero-title {
+  font-size: clamp(34px, 6vw, 58px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+  background: linear-gradient(120deg, #ffffff, #cfe0ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  max-width: 640px;
+}
+
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ===== Features ===== */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.feature-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--surface-2), var(--bg-soft));
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.feature-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+.feature-card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+/* ===== Cómo funciona ===== */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 18px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.section-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.section-head p { color: var(--text-muted); font-size: 15px; }
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: relative;
+}
+
+.step-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #f07a3a);
+  color: var(--accent-text);
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.step h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.step p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+/* ===== Generación y grids en home ===== */
+.home-gen { width: 100%; }
+
+.recent { width: 100%; }
+
+/* ===== Tip en crear ===== */
+.create-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 18px;
+  align-items: start;
+}
+
+.create-tip {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+}
+
+.create-tip h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+.create-tip p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+.create-form { max-width: 640px; }
+
+/* ===== Editor a ancho completo ===== */
+.page-editor { max-width: 1400px; }
+
+/* ===== Footer ===== */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  margin-top: auto;
+}
+
+.footer-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-brand .brand-mark {
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+}
+
+.footer-nav {
+  display: flex;
+  gap: 18px;
+}
+
+.footer-nav a {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.18s;
+}
+
+.footer-nav a:hover { color: var(--text); }
+
+.footer-note {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+/* ===== Colores para preview de plantillas ===== */
+.template-preview.tp-dato-curioso { background: linear-gradient(135deg, #2c3e6b, #0f1a2e); color: var(--accent); }
+.template-preview.tp-cinco-datos { background: linear-gradient(135deg, #0f3d3a, #0a2a28); color: #7dffcb; }
+.template-preview.tp-mito-realidad { background: linear-gradient(135deg, #4a2c5c, #2b1b3d); color: #ff9f9f; }
+.template-preview.tp-historia { background: linear-gradient(135deg, #3a2f5f, #1e1938); color: #c3b3f2; }
+.template-preview.tp-arquitectura { background: linear-gradient(135deg, #2f3b2c, #162015); color: #b9e2a8; }
+.template-preview.tp-naturaleza { background: linear-gradient(135deg, #1f4d33, #0f2a1c); color: #8ee6b0; }
+.template-preview.tp-cultura { background: linear-gradient(135deg, #5f3a1e, #2a180c); color: #f2cfa8; }
+.template-preview.tp-sabias-que { background: linear-gradient(135deg, #2c5a6b, #142d36); color: #a8e3f2; }
+.template-preview.tp-quiz { background: linear-gradient(135deg, #5f3a6b, #2b1b33); color: #e6b8f2; }
+.template-preview.tp-guia-rapida { background: linear-gradient(135deg, #3b4d5f, #1a2533); color: #ffd9a8; }
+.template-preview.tp-consejos { background: linear-gradient(135deg, #4d5f1e, #24300f); color: #e2f2a8; }
+.template-preview.tp-como-llegar { background: linear-gradient(135deg, #1e4d5f, #0f2a33); color: #a8f2e3; }
+.template-preview.tp-comparativa { background: linear-gradient(135deg, #4646b3, #232366); color: #c9c9ff; }
+.template-preview.tp-informacion-general { background: linear-gradient(135deg, #5f1e4d, #330f2a); color: #f2a8dd; }
+.template-preview.tp-mejor-epoca { background: linear-gradient(135deg, #b3782c, #5f3a14); color: #ffe9c2; }
+
+/* Plantilla: botón + transición */
+.template-card { gap: 12px; }
+
+.tpl-use {
+  margin-top: 2px;
+  align-self: flex-start;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .create-grid { grid-template-columns: 1fr; }
+  .create-tip { position: static; }
+}
+
+@media (max-width: 860px) {
+  .page { padding: 24px 16px 72px; gap: 28px; }
+  .footer-inner { flex-direction: column; align-items: flex-start; }
+  .hero { padding-top: 44px; }
+  .page-editor { padding-left: 12px; padding-right: 12px; }
+}

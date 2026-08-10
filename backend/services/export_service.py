@@ -3,6 +3,7 @@ import io
 import json
 import logging
 import re
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -67,6 +68,78 @@ def _css(value) -> str:
     if not _CSS_VALUE_RE.match(raw):
         return ""
     return raw
+
+
+def _image_url(value) -> str:
+    """Sanitiza una URL de imagen para usarla dentro de url('...').
+
+    Reemplaza comillas y backslashes para que no rompa el atributo style ni la
+    cadena CSS, y escapa el resto de caracteres especiales de HTML.
+    """
+    url = str(value or "").strip()
+    url = url.replace("'", "%27").replace('"', "%22").replace("\\", "/")
+    return html_module.escape(url, quote=False)
+
+
+def _embed_image(value) -> str:
+    """Devuelve la imagen como data URL base64 si es posible.
+
+    Al incrustar la imagen en el HTML de exportación el PNG ya no depende de que
+    el servidor (Playwright) pueda alcanzar la URL original (403 externos,
+    hotlink, firewalls, etc.) que sí carga el navegador del usuario en la
+    preview. Si no se puede descargar, devuelve la URL original.
+    """
+    url = str(value or "").strip()
+    if not url or url.startswith("data:"):
+        return url
+    try:
+        import base64
+        import mimetypes
+
+        req = urllib.request.Request(url, headers={
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) "
+                "Gecko/20100101 Firefox/130.0"
+            ),
+            "Accept": "image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5",
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = resp.read()
+            ctype = resp.headers.get("Content-Type", "")
+        if len(data) > 8 * 1024 * 1024:
+            logger.warning("Imagen demasiado grande para incrustar (%d bytes); usando URL", len(data))
+            return url
+        if not ctype or ctype.startswith("text/"):
+            ctype = mimetypes.guess_type(url)[0] or "image/png"
+        return f"data:{ctype};base64,{base64.b64encode(data).decode('ascii')}"
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("No se pudo incrustar la imagen (%s); usando URL", exc)
+        return url
+
+
+def _inject_card_photo(card_html: str, image: str) -> str:
+    """Añade la foto como fondo de .travel-card para cualquier plantilla."""
+    bg_style = (
+        "background-image:linear-gradient(var(--tc-overlay),var(--tc-overlay)),"
+        f"url('{_image_url(image)}');"
+        "background-size:cover;background-position:center;"
+    )
+    return re.sub(
+        r'<div class="travel-card([^"]*)"([^>]*)>',
+        lambda m: f'<div class="travel-card{m.group(1)} tc-has-photo"{m.group(2)} style="{bg_style}">',
+        card_html,
+        count=1,
+    )
+
+
+def _inject_format_class(card_html: str, cls: str) -> str:
+    """Añade una clase modificadora (ej. tc-square) al .travel-card."""
+    return re.sub(
+        r'<div class="travel-card([^"]*)"([^>]*)>',
+        lambda m: f'<div class="travel-card{m.group(1)} {cls}"{m.group(2)}>',
+        card_html,
+        count=1,
+    )
 
 
 def _render_facts_list(facts) -> str:
@@ -185,9 +258,22 @@ def render_card_html(
     # Limpia cualquier token no reemplazado para evitar errores.
     card_html = re.sub(r"\{\{[A-Z_]+\}\}", "", card_html)
 
+    # Foto como fondo de la tarjeta en cualquier plantilla. Se incrusta la
+    # imagen en base64 para que el PNG sea fiel a lo que ve el usuario.
+    image_src = _embed_image(card.image) if card.image else None
+    if image_src:
+        card_html = _inject_card_photo(card_html, image_src)
+
+    # Formato corto (square): clase para compactar el diseño.
+    if height <= 1100:
+        card_html = _inject_format_class(card_html, "tc-square")
+
+    text_scale = round(
+        design.get("textScale", 1) * (0.82 if height <= 1100 else 1), 4
+    )
     css_vars = (
         "--tc-bg: var(--bg); --tc-text: var(--text); --tc-accent: var(--accent); "
-        f"--tc-overlay: var(--overlay); --tc-text-scale: {design.get('textScale', 1)};"
+        f"--tc-overlay: var(--overlay); --tc-text-scale: {text_scale};"
     )
 
     return f"""<!DOCTYPE html>
@@ -213,7 +299,26 @@ def render_card_html(
   position: relative;
   overflow: hidden;
   font-family: {tokens['FONT']};
+  container: tc / size;
 }}
+
+.travel-card.tc-has-photo {{ --tc-photo-shadow: 0 1px 2px rgba(0,0,0,0.55), 0 3px 10px rgba(0,0,0,0.3); }}
+.travel-card.tc-has-photo :where(*) {{ text-shadow: var(--tc-photo-shadow); }}
+.travel-card.tc-has-photo .dc-badge,
+.travel-card.tc-has-photo .sq-badge,
+.travel-card.tc-has-photo .hi-label,
+.travel-card.tc-has-photo .qz-badge,
+.travel-card.tc-has-photo .cp-badge,
+.travel-card.tc-has-photo .gr-badge,
+.travel-card.tc-has-photo .cj-badge,
+.travel-card.tc-has-photo .cu-badge,
+.travel-card.tc-has-photo .ar-spec,
+.travel-card.tc-has-photo .na-badge,
+.travel-card.tc-has-photo .ll-badge,
+.travel-card.tc-has-photo .me-badge,
+.travel-card.tc-has-photo .ig-badge,
+.travel-card.tc-has-photo .cd-label,
+.travel-card.tc-has-photo .mr-badge {{ text-shadow: none; }}
 
 {LOGO_CSS}
 {template.css}

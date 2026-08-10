@@ -1,4 +1,4 @@
-/* ===== App: router, estado global e inicialización ===== */
+/* ===== App: estado global compartido y utilidades de página ===== */
 
 const App = {
   state: {
@@ -15,62 +15,76 @@ const App = {
 
   _toastTimer: null,
 
-  async init() {
+  toast(message, type) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'toast show' + (type ? ' ' + type : '');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      el.classList.remove('show');
+    }, 3200);
+  },
+
+  setActiveNav() {
+    const path = location.pathname;
+    document.querySelectorAll('.nav-link').forEach((link) => {
+      const dest = link.getAttribute('href') || '';
+      link.classList.toggle('active', dest === path || (dest === '/' && path === '/'));
+    });
+  },
+
+  setupMobileNav() {
+    const toggle = document.getElementById('menu-toggle');
+    const nav = document.getElementById('main-nav');
+    if (!toggle || !nav) return;
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = nav.classList.toggle('open');
+      toggle.textContent = open ? '✕' : '☰';
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    });
+    document.addEventListener('click', (e) => {
+      if (nav.contains(e.target) || toggle.contains(e.target)) return;
+      nav.classList.remove('open');
+      toggle.textContent = '☰';
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  },
+
+  /* ===== Navegación hacia el editor (otra página) ===== */
+
+  launchEditor(payload) {
     try {
-      this.setupNav();
-      this.setupEditorButtons();
-      await Generator.init();
-      Editor.init();
-      await this.renderTemplates();
-      await this.renderDestinations();
-      this.loadRecentProjects();
-      await this.setupTemplateSelect();
-      this.show('dashboard');
+      sessionStorage.setItem('tc_draft', JSON.stringify(payload));
     } catch (err) {
-      console.error('Error al iniciar la aplicación:', err);
-      const target = document.getElementById('view-dashboard');
-      if (target) target.classList.remove('hidden');
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.textContent = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
-        toast.className = 'toast show error';
-      }
+      console.warn('No se pudo guardar el borrador:', err);
+    }
+    location.href = '/editor';
+  },
+
+  launchEditorFromTemplate(template) {
+    this.launchEditor({ template, cards: [], projectName: 'Proyecto nuevo' });
+  },
+
+  async resolveTemplateForCategory(category) {
+    try {
+      const cats = await API.categories.list();
+      const match = cats.find((c) => c.id === category);
+      return (match && match.template) || 'dato-curioso';
+    } catch (err) {
+      console.warn('No se pudo resolver la plantilla por categoría:', err);
+      return 'dato-curioso';
     }
   },
 
-  setupNav() {
-    document.querySelectorAll('[data-nav]').forEach((link) => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.show(link.dataset.nav);
-      });
-    });
-    document.getElementById('btn-hero-create').addEventListener('click', () => this.show('create'));
-  },
+  /* ===== Select de plantillas (editor / crear) ===== */
 
-  setupEditorButtons() {
-    document.getElementById('btn-export-one').addEventListener('click', () => Exporter.exportOne());
-    document.getElementById('btn-export-all').addEventListener('click', () => Exporter.exportAll());
-    document.getElementById('btn-copy-copy').addEventListener('click', () => Exporter.copyCopyText());
-    document.getElementById('modal-close').addEventListener('click', () => Editor.hideModal());
-    document.getElementById('modal-cancel').addEventListener('click', () => Editor.hideModal());
-    document.getElementById('modal-save').addEventListener('click', () => Editor.save());
-    window.addEventListener('beforeunload', (e) => {
-      if (this.state && this.state._dirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
-    window.addEventListener('resize', () => {
-      if (document.getElementById('view-editor').classList.contains('hidden') === false) {
-        fitPreview();
-      }
-    });
-  },
-
-  async setupTemplateSelect() {
+  async setupTemplateSelect(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
     const templates = await TemplateStore.loadList();
-    const select = document.getElementById('d-template');
     select.innerHTML = '';
     for (const tpl of templates) {
       const opt = document.createElement('option');
@@ -78,121 +92,16 @@ const App = {
       opt.textContent = tpl.name;
       select.appendChild(opt);
     }
-    if (templates.length && !templates.some((t) => t.id === this.state.template)) {
-      this.state.template = templates[0].id;
-    }
   },
 
-  show(view) {
-    const inEditor = !document.getElementById('view-editor').classList.contains('hidden');
-    if (inEditor && view !== 'editor' && this.state._dirty) {
-      if (!confirm('Tienes cambios sin guardar. ¿Salir de todos modos?')) return;
-    }
+  /* ===== Proyectos ===== */
 
-    document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
-    const target = document.getElementById('view-' + view);
-    if (target) target.classList.remove('hidden');
-
-    document.querySelectorAll('.nav-link').forEach((l) => l.classList.remove('active'));
-    const navLink = document.querySelector(`.nav-link[data-nav="${view}"]`);
-    if (navLink) navLink.classList.add('active');
-
-    if (view === 'editor') {
-      Editor.enter();
-    } else {
-      clearPreviewStyles();
-      if (view === 'projects') {
-        this.loadProjects();
-      } else if (view === 'dashboard') {
-        this.loadRecentProjects();
-      }
-    }
-  },
-
-  async openEditor(payload) {
-    let template = payload.template || this.state.template || 'dato-curioso';
-    if (!payload.template) {
-      try {
-        const cats = await API.categories.list();
-        const match = cats.find((c) => c.id === payload.category);
-        if (match && match.template) template = match.template;
-      } catch (err) {
-        console.warn('No se pudo resolver la plantilla por categoría:', err);
-      }
-    }
-    this.state = {
-      destination: payload.destination || '',
-      category: payload.category || 'dato_curioso',
-      cards: payload.cards || [],
-      template,
-      format: payload.format || this.state.format || 'instagram_portrait',
-      projectId: payload.projectId || null,
-      projectName: payload.projectName || 'Proyecto nuevo',
-      currentIndex: 0,
-      language: payload.language || 'es',
-    };
-    document.getElementById('editor-project-name').textContent = this.state.projectName;
-    this.show('editor');
-  },
-
-  async renderTemplates() {
-    const templates = await TemplateStore.loadList();
-    const grid = document.getElementById('templates-grid');
-    grid.innerHTML = '';
-    if (!templates.length) {
-      grid.innerHTML = '<div class="empty-state">No hay plantillas.</div>';
-      return;
-    }
-    for (const tpl of templates) {
-      const card = document.createElement('div');
-      card.className = 'template-card';
-      card.innerHTML = `
-        <div class="template-preview tp-${tpl.id}">${tpl.name[0]}</div>
-        <div class="template-name">${esc(tpl.name)}</div>
-        <div class="template-desc">${esc(tpl.description)}</div>
-      `;
-      card.addEventListener('click', () => {
-        this.state.template = tpl.id;
-        this.openEditor({
-          destination: this.state.destination,
-          category: this.state.category,
-          cards: this.state.cards,
-          template: tpl.id,
-          format: this.state.format,
-          projectId: this.state.projectId,
-          projectName: this.state.projectName,
-        });
-      });
-      grid.appendChild(card);
-    }
-  },
-
-  async renderDestinations() {
-    const dests = await API.destinations.list();
-    const grid = document.getElementById('destinations-grid');
-    grid.innerHTML = '';
-    if (!dests.length) {
-      grid.innerHTML = '<div class="empty-state">No hay destinos.</div>';
-      return;
-    }
-    for (const d of dests) {
-      const card = document.createElement('div');
-      card.className = 'dest-card';
-      card.innerHTML = `
-        <div class="dest-name">${esc(d.name)}</div>
-        <div class="dest-region">${esc(d.region)}</div>
-      `;
-      grid.appendChild(card);
-    }
-  },
-
-  renderProjectCard(project) {
+  renderProjectCard(project, onAction) {
     const div = document.createElement('div');
     div.className = 'project-card';
     const date = project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '';
-    const emoji = '🖼';
     div.innerHTML = `
-      <div class="project-thumb">${emoji}</div>
+      <div class="project-thumb">🖼</div>
       <div class="project-body">
         <div class="project-name">${esc(project.name)}</div>
         <div class="project-meta">${esc(project.destination || '—')}<br>${esc(date)} · ${project.cards_count || 0} tarjetas</div>
@@ -204,7 +113,7 @@ const App = {
     `;
     div.querySelector('.act-open').addEventListener('click', (e) => {
       e.stopPropagation();
-      Editor.loadProject(project.id);
+      location.href = '/editor?project=' + encodeURIComponent(project.id);
     });
     div.querySelector('.act-del').addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -212,8 +121,7 @@ const App = {
       try {
         await API.projects.del(project.id);
         App.toast('Proyecto eliminado.', 'success');
-        this.loadRecentProjects();
-        this.loadProjects();
+        if (onAction) onAction();
       } catch (err) {
         App.toast(err.message || 'No se pudo eliminar.', 'error');
       }
@@ -221,8 +129,9 @@ const App = {
     return div;
   },
 
-  async loadProjects() {
-    const grid = document.getElementById('projects-list');
+  async loadProjects(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
     grid.innerHTML = '';
     try {
       const projects = await API.projects.list();
@@ -230,14 +139,18 @@ const App = {
         grid.innerHTML = '<div class="empty-state">Aún no tienes proyectos. ¡Crea tu primera tarjeta!</div>';
         return;
       }
-      for (const p of projects) grid.appendChild(this.renderProjectCard(p));
+      for (const p of projects) grid.appendChild(this.renderProjectCard(p, () => {
+        this.loadProjects(gridId);
+        this.loadRecentProjects('recent-projects');
+      }));
     } catch (err) {
       grid.innerHTML = `<div class="empty-state">${esc(err.message)}</div>`;
     }
   },
 
-  async loadRecentProjects() {
-    const grid = document.getElementById('recent-projects');
+  async loadRecentProjects(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
     grid.innerHTML = '';
     try {
       const projects = await API.projects.list();
@@ -245,23 +158,45 @@ const App = {
         grid.innerHTML = '<div class="empty-state">Sin proyectos aún. Genera tu primer contenido.</div>';
         return;
       }
-      for (const p of projects.slice(0, 4)) grid.appendChild(this.renderProjectCard(p));
+      for (const p of projects.slice(0, 4)) grid.appendChild(this.renderProjectCard(p, () => {
+        this.loadProjects('projects-list');
+        this.loadRecentProjects(gridId);
+      }));
     } catch (err) {
       grid.innerHTML = `<div class="empty-state">${esc(err.message)}</div>`;
     }
   },
 
-  toast(message, type) {
-    const el = document.getElementById('toast');
-    el.textContent = message;
-    el.className = 'toast show' + (type ? ' ' + type : '');
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      el.classList.remove('show');
-    }, 3200);
+  /* ===== Plantillas ===== */
+
+  async renderTemplates(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    try {
+      const templates = await TemplateStore.loadList();
+      if (!templates.length) {
+        grid.innerHTML = '<div class="empty-state">No hay plantillas.</div>';
+        return;
+      }
+      for (const tpl of templates) {
+        const card = document.createElement('div');
+        card.className = 'template-card';
+        card.innerHTML = `
+          <div class="template-preview tp-${tpl.id}">${tpl.name[0]}</div>
+          <div class="template-name">${esc(tpl.name)}</div>
+          <div class="template-desc">${esc(tpl.description)}</div>
+          <button class="btn btn-primary btn-sm tpl-use">Usar plantilla</button>
+        `;
+        card.addEventListener('click', () => {
+          App.launchEditorFromTemplate(tpl.id);
+        });
+        grid.appendChild(card);
+      }
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state">${esc(err.message)}</div>`;
+    }
   },
 };
-
-document.addEventListener('DOMContentLoaded', () => App.init());
 
 window.App = App;

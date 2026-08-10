@@ -1,7 +1,5 @@
 import logging
-from pathlib import Path
 
-from config import DATA_DIR
 from gemini.client import GeminiClient, get_client
 from gemini.prompts import build_correction_prompt, build_generation_prompt
 from models.content import Card, GenerateRequest, GenerationResult
@@ -16,34 +14,16 @@ logger = logging.getLogger(__name__)
 MAX_CORRECTIONS = 2
 
 
-def load_destinations_data() -> str:
-    """Carga data/destinations.json y lo convierte a texto de referencia para Gemini."""
-    path = Path(DATA_DIR) / "destinations.json"
-    if not path.exists():
-        return ""
-    try:
-        import json
-
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        return json.dumps(data, ensure_ascii=False, indent=2)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("No se pudo cargar destinations.json: %s", exc)
-        return ""
-
-
 def generate_content(
     request: GenerateRequest, client: GeminiClient | None = None
 ) -> GenerationResult:
     client = client or get_client()
-    references = load_destinations_data()
 
     prompt = build_generation_prompt(
         destination=request.destination,
         category=request.category,
         count=request.count,
         language=request.language,
-        destinations_data=references,
     )
 
     raw = client.generate(prompt, temperature=0.8)

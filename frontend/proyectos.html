@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Proyectos — TripCanvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="/" class="brand">
+        <span class="brand-mark">✈</span>
+        <span class="brand-text">
+          <span class="brand-name">TripCanvas</span>
+          <span class="brand-sub">AI Travel Content Studio</span>
+        </span>
+      </a>
+      <nav class="main-nav" id="main-nav">
+        <a href="/" class="nav-link">Inicio</a>
+        <a href="/crear" class="nav-link">Crear</a>
+        <a href="/proyectos" class="nav-link active">Proyectos</a>
+        <a href="/plantillas" class="nav-link">Plantillas</a>
+      </nav>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <div class="page-head">
+      <h1>Proyectos</h1>
+      <p>Tus creaciones guardadas.</p>
+    </div>
+
+    <div id="projects-list" class="project-grid"></div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark">✈</span>
+        <span>
+          <span class="brand-name">TripCanvas</span>
+          <span class="brand-sub">AI Travel Content Studio</span>
+        </span>
+      </div>
+      <nav class="footer-nav">
+        <a href="/">Inicio</a>
+        <a href="/crear">Crear</a>
+        <a href="/proyectos">Proyectos</a>
+        <a href="/plantillas">Plantillas</a>
+      </nav>
+      <p class="footer-note">Tarjetas de viaje generadas con inteligencia artificial y empaquetadas para tu feed.</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        App.setActiveNav();
+        App.setupMobileNav();
+        await App.loadProjects('projects-list');
+      } catch (err) {
+        console.error(err);
+        App.toast('No se pudo conectar con el servidor.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

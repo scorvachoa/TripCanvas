@@ -34,9 +34,6 @@ const API = {
     return res.blob();
   },
 
-  destinations: {
-    list: () => API.get('/api/destinations'),
-  },
   categories: {
     list: () => API.get('/api/categories'),
   },

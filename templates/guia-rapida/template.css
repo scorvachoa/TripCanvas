@@ -1,0 +1,112 @@
+/* TEMPLATE: Guía rápida — Infografía de fichas */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 88px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.gr-badge {
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  letter-spacing: 0.16em;
+  padding: 12px 24px;
+  border-radius: 999px;
+}
+
+.gr-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  font-size: calc(var(--tc-text-scale) * 28px);
+  font-weight: 600;
+}
+
+.gr-title {
+  font-size: calc(var(--tc-text-scale) * 62px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 48px;
+}
+
+.gr-facts {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  align-content: start;
+}
+
+.gr-facts li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-top: 6px solid var(--tc-accent);
+  border-radius: 16px;
+  padding: 30px 32px;
+}
+
+.gr-facts li::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tc-accent);
+}
+
+.gr-facts li .fact-num {
+  font-size: calc(var(--tc-text-scale) * 30px);
+  font-weight: 800;
+  color: var(--tc-accent);
+}
+
+.gr-facts li > span:last-child,
+.gr-facts li .fv-value {
+  font-size: calc(var(--tc-text-scale) * 32px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.gr-facts li .fv-label {
+  font-size: calc(var(--tc-text-scale) * 26px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+}
+
+.gr-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+  padding-top: 26px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+}
+
+.gr-footer .gr-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

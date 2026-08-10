@@ -1,0 +1,6 @@
+{
+  "name": "Guía rápida",
+  "category": "guia_rapida",
+  "description": "Infografía de fichas en rejilla de dos columnas.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

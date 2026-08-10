@@ -1,0 +1,6 @@
+{
+  "name": "¿Sabías que?",
+  "category": "sabias_que",
+  "description": "Burbuja de pregunta y respuesta con interrogante gigante.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

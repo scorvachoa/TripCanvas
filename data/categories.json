@@ -8,13 +8,13 @@
   {
     "id": "sabias_que",
     "name": "¿Sabías que?",
-    "template": "dato-curioso",
+    "template": "sabias-que",
     "description": "Pregunta llamativa con respuesta breve"
   },
   {
     "id": "historia",
     "name": "Historia",
-    "template": "dato-curioso",
+    "template": "historia",
     "description": "Relato breve con fecha"
   },
   {
@@ -26,19 +26,19 @@
   {
     "id": "quiz",
     "name": "Quiz",
-    "template": "dato-curioso",
+    "template": "quiz",
     "description": "Pregunta con 4 opciones"
   },
   {
     "id": "comparativa",
     "name": "Comparativa",
-    "template": "cinco-datos",
+    "template": "comparativa",
     "description": "Comparación entre dos conceptos"
   },
   {
     "id": "guia_rapida",
     "name": "Guía rápida",
-    "template": "cinco-datos",
+    "template": "guia-rapida",
     "description": "Datos prácticos del destino"
   },
   {
@@ -50,43 +50,43 @@
   {
     "id": "consejos",
     "name": "Consejos",
-    "template": "cinco-datos",
+    "template": "consejos",
     "description": "Consejos prácticos para viajeros"
   },
   {
     "id": "cultura",
     "name": "Cultura",
-    "template": "dato-curioso",
+    "template": "cultura",
     "description": "Tradiciones, costumbres y gastronomía"
   },
   {
     "id": "arquitectura",
     "name": "Arquitectura",
-    "template": "dato-curioso",
+    "template": "arquitectura",
     "description": "Estilos y técnicas constructivas"
   },
   {
     "id": "naturaleza",
     "name": "Naturaleza",
-    "template": "dato-curioso",
+    "template": "naturaleza",
     "description": "Fauna, flora y paisajes"
   },
   {
     "id": "como_llegar",
     "name": "Cómo llegar",
-    "template": "cinco-datos",
+    "template": "como-llegar",
     "description": "Rutas y transportes"
   },
   {
     "id": "mejor_epoca",
     "name": "Mejor época",
-    "template": "cinco-datos",
+    "template": "mejor-epoca",
     "description": "Estaciones y clima ideal"
   },
   {
     "id": "informacion_general",
     "name": "Información general",
-    "template": "dato-curioso",
+    "template": "informacion-general",
     "description": "Qué es y dónde está"
   }
 ]

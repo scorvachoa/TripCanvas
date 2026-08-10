@@ -1,0 +1,6 @@
+{
+  "name": "Consejos",
+  "category": "consejos",
+  "description": "Tarjetas numeradas apiladas con badges circulares.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

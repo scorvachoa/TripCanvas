@@ -1,0 +1,6 @@
+{
+  "name": "Información general",
+  "category": "informacion_general",
+  "description": "Ficha tipo pasaporte con líderes punteados y sello.",
+  "formats": ["instagram_portrait", "square", "story"]
+}

@@ -1,0 +1,117 @@
+/* TEMPLATE: Cultura — Cintas tejidas andinas */
+.travel-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  padding: 150px 92px 52px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cu-band {
+  height: 26px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--tc-accent) 0 46px,
+    rgba(255, 255, 255, 0.9) 46px 78px,
+    rgba(0, 0, 0, 0.45) 78px 124px
+  );
+  margin-bottom: 44px;
+  flex-shrink: 0;
+}
+
+.cu-band-bottom {
+  margin: 46px 0 34px;
+}
+
+.cu-badge {
+  align-self: flex-start;
+  background: var(--tc-accent);
+  color: #1a1205;
+  font-weight: 800;
+  font-size: calc(var(--tc-text-scale) * 26px);
+  letter-spacing: 0.18em;
+  padding: 12px 26px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+
+.cu-title {
+  font-size: calc(var(--tc-text-scale) * 66px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0 0 28px;
+}
+
+.cu-body {
+  font-size: calc(var(--tc-text-scale) * 36px);
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.92;
+  margin: 0 0 38px;
+  max-width: 92%;
+}
+
+.cu-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.cu-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 16px 34px;
+  font-size: calc(var(--tc-text-scale) * 30px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.cu-facts li .fact-num {
+  color: var(--tc-accent);
+  font-weight: 800;
+}
+
+.cu-facts li .fv-label {
+  color: var(--tc-accent);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: calc(var(--tc-text-scale) * 24px);
+}
+
+.cu-facts li .fv-value {
+  font-weight: 600;
+}
+
+.cu-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid rgba(255, 255, 255, 0.14);
+  padding-top: 26px;
+  font-size: calc(var(--tc-text-scale) * 28px);
+}
+
+.cu-destination {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tc-accent);
+  font-weight: 700;
+}
+
+.cu-source {
+  opacity: 0.7;
+  font-weight: 500;
+}

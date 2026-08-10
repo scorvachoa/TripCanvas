@@ -33,7 +33,22 @@ python -m venv .venv
 .venv\Scripts\python -m uvicorn main:app --app-dir backend --port 8000
 ```
 
-Abre `http://localhost:8000` en tu navegador.
+Abre `http://localhost:8000` en tu navegador. El destino se escribe como texto libre (ya no hay lista precargada de destinos).
+
+## Frontend: páginas y rutas
+
+La aplicación es **multi-página** (HTML separados servidos por FastAPI):
+
+| Ruta | Archivo | Contenido |
+|------|---------|-----------|
+| `/` | `frontend/index.html` | Home informativo: hero, características, cómo funciona, generación rápida y proyectos recientes |
+| `/crear` | `frontend/crear.html` | Formulario de generación (2 columnas: formulario + guía de categorías) |
+| `/proyectos` | `frontend/proyectos.html` | Lista de proyectos guardados (editar/eliminar) |
+| `/plantillas` | `frontend/plantillas.html` | Galería de plantillas (se abre el editor con la plantilla elegida) |
+| `/editor` | `frontend/editor.html` | Editor completo (contenido + preview + diseño) |
+
+- La nav es responsive: menú hamburguesa en pantallas ≤ 860px.
+- Las páginas comparten header y footer; el estado del editor se pasa por URL (`?project=`, `?template=`) o por un borrador en `sessionStorage`.
 
 ## Stack
 
@@ -48,20 +63,27 @@ Abre `http://localhost:8000` en tu navegador.
 
 ```
 backend/
-  main.py              # FastAPI + monta el frontend
+  main.py              # FastAPI, rutas de páginas y montaje del frontend
   config.py            # Configuración desde .env
   gemini/              # Cliente, prompts y generador de contenido (aislado)
   api/                 # Endpoints: generation, projects, export
   models/              # Modelos Pydantic (content, project)
   services/            # export, validation, template, json_storage, rate_limit
-  database/            # SQLite (sustituida por JSON en data/projects.json)
 frontend/
-  index.html, css/, js/
+  index.html           # Home informativo
+  crear.html           # Generación (2 columnas)
+  proyectos.html       # Proyectos guardados
+  plantillas.html      # Galería de plantillas
+  editor.html          # Editor (contenido, preview, diseño)
+  css/                 # main, components, dashboard, pages, editor
+  js/                  # api, preview, templates, generator, editor, export, app
+  favicon.svg
 templates/             # Plantillas independientes (html + css + config.json)
   dato-curioso/        # Fotográfico + moderno
   cinco-datos/         # Editorial + informativo
   mito-realidad/       # Contraste visual
-data/                  # destinations.json, categories.json, projects.json
+  ... (15 plantillas en total)
+data/                  # categories.json, projects.json
 scripts/               # Utilidades de desarrollo y pruebas
 output/                # Exportaciones generadas
 ```
@@ -71,7 +93,6 @@ output/                # Exportaciones generadas
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/generate` | Genera contenido con Gemini (JSON validado) |
-| GET | `/api/destinations` | Lista destinos |
 | GET | `/api/categories` | Lista categorías |
 | GET | `/api/templates` | Lista plantillas |
 | GET | `/api/templates/{id}` | HTML/CSS de una plantilla |
@@ -88,7 +109,7 @@ output/                # Exportaciones generadas
 - Gemini solo devuelve **datos JSON**; nunca HTML/CSS. Contenido y diseño están separados.
 - La preview del editor es HTML/CSS real (no una imagen), por lo que la edición se ve en tiempo real.
 - Los formatos soportados: Instagram Portrait (1080×1350), Square (1080×1080), Story (1080×1920).
-- La exportación usa el HTML renderizado con las plantillas exactamente al tamaño seleccionado.
+- La exportación usa el HTML renderizado con las plantillas exactamente al tamaño seleccionado. Las imágenes remotas se incrustan en base64 cuando el servidor no puede alcanzarlas (403/hotlink/firewalls).
 - Los `template_id` se validan con regex (`^[a-zA-Z0-9_-]+$`) para evitar path traversal.
 - `projects.json` usa lock de archivo (msvcrt/fcntl) en operaciones de lectura-modificación-escritura; si el JSON se encuentra corrupto se respalda como `projects.corrupt-<timestamp>.json` antes de continuar.
 - El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP (en memoria; se reinicia al reiniciar el servidor).

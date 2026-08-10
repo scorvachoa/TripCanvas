@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from api import export, generation, projects
@@ -31,6 +32,22 @@ app.include_router(export.router)
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+_PAGE_FILES = {
+    "/crear": "crear.html",
+    "/proyectos": "proyectos.html",
+    "/plantillas": "plantillas.html",
+    "/editor": "editor.html",
+}
+
+
+def _serve_page(filename: str) -> FileResponse:
+    return FileResponse(FRONTEND_DIR / filename)
+
+
+for _path, _file in _PAGE_FILES.items():
+    app.get(_path, include_in_schema=False, name="page-" + _file)(lambda f=_file: _serve_page(f))
 
 
 if FRONTEND_DIR.exists():

@@ -58,7 +58,7 @@ function factsAreLabelValue(facts) {
   return Array.isArray(facts) && facts.length > 0 && typeof facts[0] === 'object';
 }
 
-function buildCardHTML(card, template, destination, design) {
+function buildCardHTML(card, template, destination, design, extraClass) {
   const extra = card.extra || {};
   const factsHtml = factsAreLabelValue(card.facts)
     ? renderFactsLabelValue(card.facts)
@@ -105,6 +105,27 @@ function buildCardHTML(card, template, destination, design) {
     html = html.split('{{' + key + '}}').join(value);
   }
   html = html.replace(/\{\{[A-Z_]+\}\}/g, '');
+
+  if (extraClass) {
+    html = html.replace(
+      /<div class="travel-card([^"]*)"([^>]*)>/i,
+      (m, cls, attrs) => '<div class="travel-card' + cls + ' ' + extraClass + '"' + attrs + '>'
+    );
+  }
+
+  if (imageUrl) {
+    // Fondo de foto con difuminado sutil para cualquier plantilla.
+    const safeUrl = esc(imageUrl.replace(/'/g, '%27').replace(/"/g, '%22'));
+    const bgStyle =
+      "style=\"background-image:linear-gradient(var(--tc-overlay),var(--tc-overlay)),url('" +
+      safeUrl +
+      "');background-size:cover;background-position:center;\"";
+    html = html.replace(
+      /<div class="travel-card([^"]*)"([^>]*)>/i,
+      (m, cls, attrs) =>
+        '<div class="travel-card' + cls + ' tc-has-photo"' + attrs + ' ' + bgStyle + '>'
+    );
+  }
 
   return html;
 }
@@ -185,6 +206,8 @@ async function renderPreview() {
 
   const template = await TemplateStore.get(state.template);
   const design = buildDesignFromControls();
+  const fmt = currentFormat();
+  const textScale = Math.round(design.textScale * (fmt.h <= 1100 ? 0.82 : 1) * 100) / 100;
 
   ensureCssEl().textContent = `
     .travel-card, .travel-card * {
@@ -195,12 +218,33 @@ async function renderPreview() {
 
     .travel-card {
       position: relative;
+      width: ${fmt.w}px;
+      height: ${fmt.h}px;
+      container: tc / size;
       --tc-bg: ${design.background};
       --tc-text: ${design.text};
       --tc-accent: ${design.accent};
       --tc-overlay: ${design.overlay};
-      --tc-text-scale: ${design.textScale};
+      --tc-text-scale: ${textScale};
     }
+
+    .travel-card.tc-has-photo { --tc-photo-shadow: 0 1px 2px rgba(0,0,0,0.55), 0 3px 10px rgba(0,0,0,0.3); }
+    .travel-card.tc-has-photo :where(*) { text-shadow: var(--tc-photo-shadow); }
+    .travel-card.tc-has-photo .dc-badge,
+    .travel-card.tc-has-photo .sq-badge,
+    .travel-card.tc-has-photo .hi-label,
+    .travel-card.tc-has-photo .qz-badge,
+    .travel-card.tc-has-photo .cp-badge,
+    .travel-card.tc-has-photo .gr-badge,
+    .travel-card.tc-has-photo .cj-badge,
+    .travel-card.tc-has-photo .cu-badge,
+    .travel-card.tc-has-photo .ar-spec,
+    .travel-card.tc-has-photo .na-badge,
+    .travel-card.tc-has-photo .ll-badge,
+    .travel-card.tc-has-photo .me-badge,
+    .travel-card.tc-has-photo .ig-badge,
+    .travel-card.tc-has-photo .cd-label,
+    .travel-card.tc-has-photo .mr-badge { text-shadow: none; }
 
     .tc-logo {
       position: absolute;
@@ -227,7 +271,7 @@ async function renderPreview() {
     ${template.css}
   `;
 
-  const html = buildCardHTML(card, template, state.destination, design);
+  const html = buildCardHTML(card, template, state.destination, design, fmt.h <= 1100 ? 'tc-square' : '');
   const { w, h } = currentFormat();
   el.innerHTML = `<div style="width:${w}px;height:${h}px">${html}</div>`;
   fitPreview();
