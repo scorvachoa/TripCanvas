@@ -1,4 +1,6 @@
-FROM python:3.12-slim
+# bookworm (Debian 12): soportado por Playwright 1.49. La variante slim actual
+# usa Debian trixie, donde `playwright install --with-deps` falla.
+FROM python:3.12-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
