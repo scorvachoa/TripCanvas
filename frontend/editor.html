@@ -59,10 +59,6 @@
             <input type="text" id="e-destination" placeholder="Ej. Machu Picchu, Cusco">
           </div>
           <div class="field">
-            <label for="e-category">Categoría</label>
-            <select id="e-category"></select>
-          </div>
-          <div class="field">
             <label for="e-title">Título</label>
             <textarea id="e-title" rows="3"></textarea>
           </div>
@@ -178,7 +174,6 @@
 
   </main>
 
-  <div id="toast" class="toast"></div>
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal">
       <div class="modal-head">
@@ -204,6 +199,7 @@
   <script src="js/generator.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/export.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {

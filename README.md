@@ -8,6 +8,7 @@ Herramienta web para crear tarjetas visuales sobre destinos turísticos de Perú
 - `curl` disponible en el PATH (se usa para llamar a la API de Gemini)
 - Una clave de API de Google Gemini
 - Una API key de Pexels (gratuita en https://www.pexels.com/api/) para las fotos automáticas del destino
+- Una API key de Tinify/TinyPNG (opcional, https://tinypng.com/developers) para comprimir los PNG al exportar (500 compresiones gratis al mes)
 - Una base de datos MySQL (p. ej. Aiven for MySQL) con un usuario y password
 
 ## Instalación
@@ -33,6 +34,7 @@ python -m venv .venv
 #   GEMINI_API_KEY_2=clave3
 # Se usa primero GEMINI_API_KEY y luego las numeradas en orden.
 # Pexels (fotos del destino): PEXELS_API_KEY=tu_clave
+# Tinify (compresión opcional al exportar): TINIFY_API_KEY=tu_clave
 # La tabla `projects` se crea automáticamente al arrancar el servidor.
 ```
 
@@ -52,7 +54,7 @@ La aplicación es **multi-página** (HTML separados servidos por FastAPI):
 | Ruta | Archivo | Contenido |
 |------|---------|-----------|
 | `/` | `frontend/index.html` | Home informativo: hero, características, cómo funciona, generación rápida y proyectos recientes |
-| `/crear` | `frontend/crear.html` | Formulario de generación (2 columnas: formulario + guía de categorías) |
+| `/crear` | `frontend/crear.html` | Formulario de generación (destino + plantilla; 2 columnas: formulario + guía de plantillas) |
 | `/proyectos` | `frontend/proyectos.html` | Lista de proyectos guardados (editar/eliminar) |
 | `/plantillas` | `frontend/plantillas.html` | Galería de plantillas (se abre el editor con la plantilla elegida) |
 | `/editor` | `frontend/editor.html` | Editor completo (contenido + preview + diseño) |
@@ -62,13 +64,14 @@ La aplicación es **multi-página** (HTML separados servidos por FastAPI):
 
 ## Stack
 
-- **Frontend:** HTML, CSS y JavaScript vanilla (sin frameworks)
+- **Frontend:** HTML, CSS y JavaScript vanilla (sin frameworks); notificaciones y diálogos con **SweetAlert2** (CDN)
 - **Backend:** Python + FastAPI
 - **IA:** Google Gemini (módulo aislado en `backend/gemini/`)
 - **Fotos del destino:** Pexels (`services/pexels_service.py`); Gemini propone la búsqueda por tarjeta
+- **Compresión PNG:** Tinify/TinyPNG (`services/tinify_service.py`), opcional y best-effort al exportar
 - **Almacenamiento:** MySQL (Aiven) vía PyMySQL con pool de conexiones; la tabla `projects` se crea automáticamente al arrancar
 - **Exportación:** Playwright (renderiza el HTML/CSS real a PNG en un directorio temporal por petición)
-- **Rate limit:** 10 solicitudes de generación y 5 de exportación por minuto y por IP (en memoria)
+- **Rate limit:** 10 solicitudes de generación, 5 de exportación y 120 de preview por minuto y por IP (en memoria)
 
 ## Estructura
 
@@ -79,7 +82,7 @@ backend/
   gemini/              # Cliente, prompts y generador de contenido (aislado)
   api/                 # Endpoints: generation, projects, export
   models/              # Modelos Pydantic (content, project)
-  services/            # export, validation, template, mysql_storage, pexels_service, rate_limit
+  services/            # export, validation, template, mysql_storage, pexels_service, tinify_service, rate_limit
 tests/                 # Unit tests (unittest, sin servidor ni API key)
 frontend/
   index.html           # Home informativo
@@ -95,7 +98,7 @@ templates/             # Plantillas independientes (html + css + config.json)
   cinco-datos/         # Editorial + informativo
   mito-realidad/       # Contraste visual
   ... (15 plantillas en total)
-data/                  # categories.json
+data/                  # Datos auxiliares (sin categories.json: la plantilla define el tipo)
 scripts/               # Utilidades de desarrollo, pruebas y backup
 output/                # Exportaciones generadas y backups (backups/projects-<fecha>.json)
 ```
@@ -105,8 +108,7 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/health` | Estado del servidor y de la conexión a MySQL (`database: ok` o HTTP 503) |
-| POST | `/api/generate` | Genera contenido con Gemini (JSON validado); `with_images` opcional para fotos del destino |
-| GET | `/api/categories` | Lista categorías |
+| POST | `/api/generate` | Genera contenido con Gemini (JSON validado); `template_id` elige la plantilla/tipo de contenido, `with_images` opcional para fotos del destino |
 | GET | `/api/templates` | Lista plantillas |
 | GET | `/api/templates/{id}` | HTML/CSS de una plantilla |
 | POST | `/api/projects` | Crear proyecto |
@@ -114,8 +116,8 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 | GET | `/api/projects/{id}` | Obtener proyecto |
 | PUT | `/api/projects/{id}` | Actualizar proyecto |
 | DELETE | `/api/projects/{id}` | Eliminar proyecto |
-| POST | `/api/export` | Exportar una tarjeta a PNG (1080×1350 por defecto) |
-| POST | `/api/export/all` | Exportar ZIP con PNGs + `copy.txt` |
+| POST | `/api/export` | Exportar una tarjeta a PNG (1080×1350 por defecto); `compress: true` la optimiza con Tinify |
+| POST | `/api/export/all` | Exportar ZIP con PNGs + `copy.txt`; `compress: true` optimiza los PNG con Tinify |
 | POST | `/api/preview` | Render de una tarjeta como HTML (lo usa el editor) |
 
 ## Notas de implementación
@@ -123,6 +125,8 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 - Gemini solo devuelve **datos JSON**; nunca HTML/CSS. Contenido y diseño están separados.
 - **Fotos automáticas del destino:** con el toggle "Incluir foto" activado, Gemini propone una búsqueda corta por tarjeta (`image_query`) y el backend descarga una foto real desde Pexels (`services/pexels_service.py`) guardando su URL en `card.image`. La foto se incrusta en base64 al renderizar. Sin `PEXELS_API_KEY` (o si una búsqueda falla) la tarjeta se guarda sin foto, sin romper el lote. Hay un límite de 8 fotos por lote para cuidar la cuota gratuita de Pexels (~200 búsquedas/mes).
 - La preview del editor es HTML/CSS real y la genera el **backend** (`POST /api/preview`) con el mismo motor que la exportación, de modo que el preview y el PNG final nunca divergen.
+- **Notificaciones y diálogos:** el frontend usa **SweetAlert2** (CDN, sin instalar nada) para los toasts y las confirmaciones (exportar comprimido/original, eliminar proyecto).
+- **Compresión Tinify:** al exportar el frontend pregunta si quieres comprimir. Con `compress: true` el PNG pasa por Tinify (`services/tinify_service.py`). Es *best-effort*: sin `TINIFY_API_KEY`, con error de red/cuota, o si no hay reducción, se conserva el PNG original. La cuota gratuita es de 500 compresiones/mes.
 - Los formatos soportados: Instagram Portrait (1080×1350), Square (1080×1080), Story (1080×1920).
 - La exportación reutiliza una única instancia de Chromium (Playwright) entre peticiones; las imágenes remotas se incrustan en base64 (con caché) cuando el servidor no puede alcanzarlas (403/hotlink/firewalls).
 - Los `template_id` se validan con regex (`^[a-zA-Z0-9_-]+$`) para evitar path traversal.
@@ -130,7 +134,7 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 - `/api/health` comprueba la conexión a MySQL y devuelve `{"status":"ok","database":"ok"}` (o HTTP 503 si la BD no responde); el pool se cierra limpio al apagar el servidor.
 - **Backups:** `scripts\backup_db.py` exporta todos los proyectos a `output\backups\projects-<fecha>.json` (columnas completas) y permite restaurarlos con `--restore` (upsert, seguro de re-ejecutar). `output/` está en `.gitignore`, así que los backups no se suben al repositorio.
 - Si el servidor no puede conectar con MySQL al arrancar, se registra un error claro y el proceso se detiene (fail-fast).
-- El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP; los endpoints de exportación (`/api/export`, `/api/export/all`) a 5 (en memoria; se reinicia al reiniciar el servidor).
+- El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP, la exportación (`/api/export`, `/api/export/all`) a 5 y la preview (`/api/preview`) a 120 (en memoria; se reinician al reiniciar el servidor).
 
 ## Despliegue en Render
 
@@ -139,7 +143,7 @@ El repo incluye `Dockerfile`, `.dockerignore` y `render.yaml` (Blueprint).
 1. **Aiven**: en la consola de Aiven (Service settings → Allowed IP addresses) añade `0.0.0.0/0` para permitir conexiones desde Render (sus IPs no son fijas).
 2. **Crea un Web Service en Render** desde el repo (runtime Docker) o conecta el Blueprint con `render.yaml`.
 3. **Variables de entorno** (dashboard de Render o `render.yaml`):
-   - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `MYSQL_PASSWORD`
+   - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `TINIFY_API_KEY` (opcional), `MYSQL_PASSWORD`
    - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_DB`
    - SSL es **opcional**: en local la conexión funciona sin CA (Aiven no lo exige). Si quieres verificar el certificado, define `MYSQL_SSL_CA_B64` con el CA de tu proyecto (consola Aiven → Overview → CA Certificate) en base64; el backend lo decodifica a un archivo temporal al arrancar.
 4. El health check usa `/healthz` (no consulta la BD, evita reinicios en bucle).

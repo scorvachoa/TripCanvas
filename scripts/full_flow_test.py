@@ -12,7 +12,7 @@ BASE = "http://127.0.0.1:8000"
 print("1. Generando con Gemini...")
 r = requests.post(f"{BASE}/api/generate", json={
     "destination": "Machu Picchu",
-    "category": "cinco_datos",
+    "template_id": "cinco-datos",
     "count": 2,
     "language": "es",
 }, timeout=120)
@@ -60,7 +60,6 @@ print(f"   OK — {w}x{h}")
 print("5. Exportando ZIP...")
 r = requests.post(f"{BASE}/api/export/all", json={
     "destination": proj["destination"],
-    "category": "cinco_datos",
     "count": 2,
     "language": "es",
     "template_id": proj["template"],

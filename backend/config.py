@@ -20,6 +20,11 @@ GEMINI_MODEL = _get("GEMINI_MODEL", "gemini-2.5-flash")
 # vacía, las tarjetas se generan sin foto.
 PEXELS_API_KEY = _get("PEXELS_API_KEY")
 
+# API key de Tinify (TinyPNG, gratis en tinypng.com/developers). Se usa para
+# comprimir los PNG al exportar cuando el usuario lo pide. Si está vacía, la
+# exportación devuelve el PNG sin comprimir.
+TINIFY_API_KEY = _get("TINIFY_API_KEY")
+
 # Claves adicionales numeradas (GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...) para
 # rotación automática ante 429/quota. Se usa primero GEMINI_API_KEY y luego
 # las numeradas en orden ascendente.

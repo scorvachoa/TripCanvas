@@ -49,8 +49,8 @@
           <input type="text" id="c-destination" placeholder="Ej. Machu Picchu, Cusco" required>
         </div>
             <div class="field">
-              <label for="c-category">Categoría</label>
-              <select id="c-category"></select>
+              <label for="c-template">Plantilla</label>
+              <select id="c-template"></select>
             </div>
             <div class="field-row">
               <div class="field">
@@ -87,8 +87,8 @@
       <div class="create-tip">
         <div class="feature-icon">💡</div>
         <div>
-          <h3>¿Qué es una categoría?</h3>
-          <p>Historia, datos curiosos, quiz, mito o realidad, mejor época, cómo llegar y más. Cada categoría usa una plantilla pensada para ese formato y se adapta a vertical, cuadrado o story.</p>
+          <h3>¿Qué es una plantilla?</h3>
+          <p>Historia, datos curiosos, quiz, mito o realidad, mejor época, cómo llegar y más. Cada plantilla está pensada para ese formato de contenido y se adapta a vertical, cuadrado o story.</p>
         </div>
       </div>
     </div>
@@ -114,12 +114,11 @@
     </div>
   </footer>
 
-  <div id="toast" class="toast"></div>
-
   <script src="js/api.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/generator.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {

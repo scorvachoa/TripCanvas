@@ -76,7 +76,7 @@
         <div class="step">
           <span class="step-num">1</span>
           <h3>Elige tu destino</h3>
-          <p>Pon el lugar y el tipo de tarjeta que quieres crear, de los formatos a los que tu audiencia responde mejor.</p>
+          <p>Pon el lugar y elige la plantilla de tarjeta que quieres crear, de los formatos a los que tu audiencia responde mejor.</p>
         </div>
         <div class="step">
           <span class="step-num">2</span>
@@ -102,8 +102,8 @@
           <input type="text" id="qg-destination" placeholder="Ej. Machu Picchu, Cusco" required>
         </div>
         <div class="field">
-          <label for="qg-category">Tipo de contenido</label>
-          <select id="qg-category" required></select>
+          <label for="qg-template">Plantilla</label>
+          <select id="qg-template" required></select>
         </div>
         <div class="field">
           <label for="qg-count">Cantidad</label>
@@ -162,12 +162,11 @@
     </div>
   </footer>
 
-  <div id="toast" class="toast"></div>
-
   <script src="js/api.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/generator.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {

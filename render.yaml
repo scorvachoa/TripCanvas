@@ -18,6 +18,8 @@ services:
         sync: false
       - key: PEXELS_API_KEY
         sync: false
+      - key: TINIFY_API_KEY
+        sync: false
       - key: MYSQL_PASSWORD
         sync: false
       # SSL opcional: la conexión local funciona sin CA (Aiven no lo exige).

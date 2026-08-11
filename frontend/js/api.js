@@ -47,9 +47,6 @@ const API = {
     return res.text();
   },
 
-  categories: {
-    list: () => API.get('/api/categories'),
-  },
   templates: {
     list: () => API.get('/api/templates'),
     get: (id) => API.get('/api/templates/' + id),

@@ -1,15 +1,13 @@
 /* ===== Generator: formularios de generación (home, crear y editor) ===== */
 
 const Generator = {
-  categories: [],
+  templates: [],
 
   async init() {
-    const cats = await API.categories.list();
-    this.categories = cats;
+    this.templates = await TemplateStore.loadList();
 
-    this.populateSelect('qg-category', cats.map((c) => ({ value: c.id, label: c.name })));
-    this.populateSelect('c-category', cats.map((c) => ({ value: c.id, label: c.name })));
-    this.populateSelect('e-category', cats.map((c) => ({ value: c.id, label: c.name })));
+    this.populateSelect('qg-template', this.templates.map((t) => ({ value: t.id, label: t.name })));
+    this.populateSelect('c-template', this.templates.map((t) => ({ value: t.id, label: t.name })));
 
     this.bindOnSubmit('quick-gen-form', () => this.runQuickGenerate());
     this.bindOnSubmit('create-form', () => this.runCreateGenerate());
@@ -57,20 +55,20 @@ const Generator = {
 
   runQuickGenerate() {
     const dest = document.getElementById('qg-destination').value;
-    const category = document.getElementById('qg-category').value;
+    const template = document.getElementById('qg-template').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('qg-count').value || '5', 10), 1), 20);
     const language = document.getElementById('qg-language').value;
     const withImages = this.checked('qg-with-images', true);
-    this.generate(dest, category, count, language, withImages, 'quick-gen-status', 'btn-quick-generate');
+    this.generate(dest, template, count, language, withImages, 'quick-gen-status', 'btn-quick-generate');
   },
 
   runCreateGenerate() {
     const dest = document.getElementById('c-destination').value.trim();
-    const category = document.getElementById('c-category').value;
+    const template = document.getElementById('c-template').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('c-count').value || '5', 10), 1), 20);
     const language = document.getElementById('c-language').value;
     const withImages = this.checked('c-with-images', true);
-    this.generate(dest, category, count, language, withImages, 'create-status', 'btn-create-generate');
+    this.generate(dest, template, count, language, withImages, 'create-status', 'btn-create-generate');
   },
 
   checked(id, defaultValue) {
@@ -78,7 +76,7 @@ const Generator = {
     return el ? el.checked : defaultValue;
   },
 
-  async generate(destination, category, count, language, withImages, statusId, btnId) {
+  async generate(destination, template, count, language, withImages, statusId, btnId) {
     if (!destination) {
       this.setStatus(statusId, 'Selecciona un destino.', 'error');
       return;
@@ -97,15 +95,16 @@ const Generator = {
         await new Promise((r) => setTimeout(r, 350));
       }
 
-      const result = await API.generate({ destination, category, count, language, with_images: withImages });
+      const result = await API.generate({ destination, template_id: template, count, language, with_images: withImages });
       this.clearStatus(statusId);
+      const tplName = (this.templates.find((t) => t.id === template) || {}).name || template;
       App.launchEditor({
         destination: result.destination || destination,
         cards: result.cards || [],
-        category,
+        template,
         language,
         projectId: null,
-        projectName: `${destination} — ${category.replace(/_/g, ' ')}`,
+        projectName: `${destination} — ${tplName}`,
       });
     } catch (err) {
       this.setStatus(statusId, err.message || 'No se pudo generar el contenido.', 'error');

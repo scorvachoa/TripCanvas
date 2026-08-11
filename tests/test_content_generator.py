@@ -11,7 +11,6 @@ from gemini.content_generator import (  # noqa: E402
     MAX_IMAGE_GENERATIONS,
     generate_content,
 )
-from models.content import GenerateRequest  # noqa: E402
 
 
 def _deck_json(count: int) -> str:
@@ -35,10 +34,14 @@ class FakeClient:
 
 
 class GenerateContentImagesTest(unittest.TestCase):
-    def _request(self, **overrides):
-        defaults = {"destination": "Cusco", "category": "dato_curioso", "count": 2}
+    def _args(self, **overrides):
+        defaults = {
+            "destination": "Cusco",
+            "category": "dato_curioso",
+            "count": 2,
+        }
         defaults.update(overrides)
-        return GenerateRequest(**defaults)
+        return defaults
 
     def test_disabled_images_do_not_search_pexels(self):
         with mock.patch.object(
@@ -47,7 +50,7 @@ class GenerateContentImagesTest(unittest.TestCase):
             content_generator, "PEXELS_API_KEY", "clave"
         ):
             result = generate_content(
-                self._request(with_images=False), client=FakeClient()
+                client=FakeClient(), **self._args(with_images=False)
             )
         search.assert_not_called()
         self.assertEqual(len(result.cards), 2)
@@ -62,7 +65,9 @@ class GenerateContentImagesTest(unittest.TestCase):
         ) as search, mock.patch.object(
             content_generator, "PEXELS_API_KEY", "clave"
         ):
-            result = generate_content(self._request(with_images=True), client=FakeClient())
+            result = generate_content(
+                client=FakeClient(), **self._args(with_images=True)
+            )
         self.assertEqual(search.call_count, 2)
         self.assertEqual(
             search.call_args_list[0].args[0], "consulta 0"
@@ -76,7 +81,9 @@ class GenerateContentImagesTest(unittest.TestCase):
         ) as search, mock.patch.object(
             content_generator, "PEXELS_API_KEY", ""
         ):
-            result = generate_content(self._request(with_images=True), client=FakeClient())
+            result = generate_content(
+                client=FakeClient(), **self._args(with_images=True)
+            )
         search.assert_not_called()
         self.assertIsNone(result.cards[0].image)
 
@@ -88,7 +95,9 @@ class GenerateContentImagesTest(unittest.TestCase):
         ), mock.patch.object(
             content_generator, "PEXELS_API_KEY", "clave"
         ):
-            result = generate_content(self._request(with_images=True), client=FakeClient())
+            result = generate_content(
+                client=FakeClient(), **self._args(with_images=True)
+            )
         self.assertEqual(len(result.cards), 2)
         self.assertIsNone(result.cards[0].image)
         self.assertIsNone(result.cards[1].image)
@@ -99,7 +108,9 @@ class GenerateContentImagesTest(unittest.TestCase):
         ), mock.patch.object(
             content_generator, "PEXELS_API_KEY", "clave"
         ):
-            result = generate_content(self._request(with_images=True), client=FakeClient())
+            result = generate_content(
+                client=FakeClient(), **self._args(with_images=True)
+            )
         self.assertIsNone(result.cards[0].image)
 
     def test_caps_number_of_fetched_photos(self):
@@ -115,8 +126,8 @@ class GenerateContentImagesTest(unittest.TestCase):
             content_generator, "PEXELS_API_KEY", "clave"
         ):
             result = generate_content(
-                self._request(count=MAX_IMAGE_GENERATIONS + 2, with_images=True),
                 client=ManyCardsClient(),
+                **self._args(count=MAX_IMAGE_GENERATIONS + 2, with_images=True),
             )
         self.assertEqual(len(result.cards), MAX_IMAGE_GENERATIONS + 2)
         self.assertEqual(search.call_count, MAX_IMAGE_GENERATIONS)

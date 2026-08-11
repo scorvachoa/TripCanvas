@@ -10,20 +10,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["projects"])
 
 
-@router.get("/categories")
-def list_categories() -> list[dict]:
-    import json as _json
-    from pathlib import Path
-
-    from config import DATA_DIR
-
-    path = Path(DATA_DIR) / "categories.json"
-    if not path.exists():
-        return []
-    with open(path, encoding="utf-8") as f:
-        return _json.load(f)
-
-
 @router.get("/templates")
 def list_templates() -> list[dict]:
     from services.template_service import list_templates as _list

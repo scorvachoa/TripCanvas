@@ -9,6 +9,7 @@ from pathlib import Path
 from config import OUTPUT_DIR
 from models.content import Card
 from services.template_service import format_size, load_template
+from services.tinify_service import compress_image
 
 logger = logging.getLogger(__name__)
 
@@ -343,6 +344,19 @@ def render_card_html(
 </html>"""
 
 
+def _maybe_compress(png_path: Path, compress: bool) -> None:
+    """Comprime el PNG en sitio si `compress` está activo y Tinify lo reduce."""
+    if not compress:
+        return
+    try:
+        data = png_path.read_bytes()
+        out = compress_image(data)
+        if out is not data:
+            png_path.write_bytes(out)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("No se pudo comprimir %s (%s); se conserva el original.", png_path, exc)
+
+
 async def export_card_png(
     card: Card,
     template_id: str,
@@ -350,12 +364,15 @@ async def export_card_png(
     format_id: str = "instagram_portrait",
     design: dict | None = None,
     output_dir: Path | None = None,
+    compress: bool = False,
 ) -> Path:
     """Genera un PNG de la tarjeta usando Playwright con el HTML renderizado."""
     html_content = render_card_html(
         card, template_id, destination=destination, format_id=format_id, design=design
     )
-    return await _capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
+    path = await _capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
+    _maybe_compress(path, compress)
+    return path
 
 
 async def _get_browser():
@@ -431,6 +448,7 @@ async def export_cards_zip(
     format_id: str = "instagram_portrait",
     design: dict | None = None,
     output_dir: Path | None = None,
+    compress: bool = False,
 ) -> Path:
     """Genera un ZIP con las tarjetas en PNG y un copy.txt con los textos."""
     out = output_dir or OUTPUT_DIR
@@ -456,6 +474,7 @@ async def export_cards_zip(
             element = page.locator(".travel-card")
             png_path = out / f"_bulk_{i:02d}.png"
             await element.screenshot(path=str(png_path))
+            _maybe_compress(png_path, compress)
             pages.append((png_path, card))
         finally:
             await page.close()

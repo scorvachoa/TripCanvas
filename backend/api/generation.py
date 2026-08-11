@@ -7,6 +7,7 @@ from gemini.client import RateLimitError
 from gemini.content_generator import generate_content
 from models.content import GenerateRequest, GenerationResult
 from services.rate_limit import rate_limit
+from services.template_service import load_template
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["generation"])
@@ -17,11 +18,21 @@ def generate(
     payload: GenerateRequest,
     _limit: None = Depends(rate_limit()),
 ) -> GenerationResult:
+    tpl = load_template(payload.template_id)
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+
     attempts = 0
     for _ in range(3):
         attempts += 1
         try:
-            result = generate_content(payload)
+            result = generate_content(
+                destination=payload.destination,
+                category=tpl.category,
+                count=payload.count,
+                language=payload.language,
+                with_images=payload.with_images,
+            )
             return result
         except HTTPException:
             raise

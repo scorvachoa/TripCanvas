@@ -19,6 +19,7 @@ class ExportRequest(Card):
     template_id: str = "dato-curioso"
     format_id: str = "instagram_portrait"
     design: dict = {}
+    compress: bool = False
 
 
 class ExportBulkRequest(GenerateRequest):
@@ -26,6 +27,7 @@ class ExportBulkRequest(GenerateRequest):
     format_id: str = "instagram_portrait"
     cards: list[Card] = []
     design: dict = {}
+    compress: bool = False
 
 
 def _cleanup_tmp(path: Path) -> None:
@@ -71,6 +73,7 @@ async def export_card(
             format_id=payload.format_id,
             design=payload.design,
             output_dir=tmp_dir,
+            compress=payload.compress,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Error exportando tarjeta: %s", exc)
@@ -103,6 +106,7 @@ async def export_all(
             format_id=payload.format_id,
             design=payload.design,
             output_dir=tmp_dir,
+            compress=payload.compress,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Error exportando ZIP: %s", exc)

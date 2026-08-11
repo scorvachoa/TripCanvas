@@ -20,14 +20,14 @@ async def main():
         # 1. Dashboard carga
         await page.goto(BASE, wait_until="networkidle")
         await page.wait_for_selector("#qg-destination option", state="attached", timeout=10000)
-        dest_count = await page.eval_on_selector_all("#qg-destination option", "els => els.length")
-        cat_count = await page.eval_on_selector_all("#qg-category option", "els => els.length")
-        print(f"Dashboard OK — destinos: {dest_count}, categorías: {cat_count}")
+        dest_count = await page.eval_on_selector_all("#qg-destination", "els => els.length")
+        tpl_count = await page.eval_on_selector_all("#qg-template option", "els => els.length")
+        print(f"Dashboard OK — destinos: {dest_count}, plantillas: {tpl_count}")
 
         # 2. Abrir editor con el proyecto de prueba
         await page.goto(f"{BASE}/index.html", wait_until="networkidle")
         await page.evaluate(
-            "App.state = {destination:'Machu Picchu', category:'dato_curioso', "
+            "App.state = {destination:'Machu Picchu', " 
             "cards: [{type:'dato_curioso', title:'Hola', body:'Prueba', facts:['a','b'], "
             "location:'Cusco', source:'UNESCO'},{type:'cinco_datos', title:'Segunda', "
             "facts:['1','2','3','4','5']}], template:'dato-curioso', format:'instagram_portrait', "

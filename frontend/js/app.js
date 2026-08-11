@@ -3,7 +3,6 @@
 const App = {
   state: {
     destination: '',
-    category: 'dato_curioso',
     cards: [],
     template: 'dato-curioso',
     format: 'instagram_portrait',
@@ -13,17 +12,16 @@ const App = {
     language: 'es',
   },
 
-  _toastTimer: null,
-
   toast(message, type) {
-    const el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = message;
-    el.className = 'toast show' + (type ? ' ' + type : '');
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      el.classList.remove('show');
-    }, 3200);
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: type === 'error' ? 'error' : type === 'success' ? 'success' : 'info',
+      title: message,
+      showConfirmButton: false,
+      timer: 3200,
+      timerProgressBar: true,
+    });
   },
 
   setActiveNav() {
@@ -68,19 +66,6 @@ const App = {
     this.launchEditor({ template, cards: [], projectName: 'Proyecto nuevo' });
   },
 
-  async resolveTemplateForCategory(category) {
-    try {
-      const cats = await API.categories.list();
-      const match = cats.find((c) => c.id === category);
-      return (match && match.template) || 'dato-curioso';
-    } catch (err) {
-      console.warn('No se pudo resolver la plantilla por categoría:', err);
-      return 'dato-curioso';
-    }
-  },
-
-  /* ===== Select de plantillas (editor / crear) ===== */
-
   async setupTemplateSelect(selectId) {
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -117,7 +102,16 @@ const App = {
     });
     div.querySelector('.act-del').addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!confirm(`¿Eliminar el proyecto "${project.name}"?`)) return;
+      const res = await Swal.fire({
+        title: '¿Eliminar proyecto?',
+        text: `Se eliminará "${project.name}" y no podrás recuperarlo.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+      });
+      if (!res.isConfirmed) return;
       try {
         await API.projects.del(project.id);
         App.toast('Proyecto eliminado.', 'success');

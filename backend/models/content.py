@@ -30,7 +30,7 @@ class GenerationResult(BaseModel):
 
 class GenerateRequest(BaseModel):
     destination: str
-    category: str
+    template_id: str = "dato-curioso"
     count: int = Field(ge=1, le=20, default=1)
     language: str = "es"
     with_images: bool = True

@@ -1,11 +1,18 @@
 import os
 import sys
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
 from models.content import Card  # noqa: E402
-from services.export_service import render_card_html  # noqa: E402
+from services import export_service  # noqa: E402
+from services.export_service import (  # noqa: E402
+    _maybe_compress,
+    render_card_html,
+)
 
 
 class RenderCardHtmlTest(unittest.TestCase):
@@ -124,6 +131,42 @@ class RenderCardHtmlTest(unittest.TestCase):
         html = render_card_html(card, "dato-curioso", destination="Peru")
         self.assertNotIn("<script>alert(1)</script>", html)
         self.assertIn("&lt;script&gt;", html)
+
+
+class MaybeCompressTest(unittest.TestCase):
+    def _png(self, data=b"png-data"):
+        tmp = Path(tempfile.mkdtemp())
+        p = tmp / "card.png"
+        p.write_bytes(data)
+        return p
+
+    def test_no_compress_leaves_file(self):
+        p = self._png()
+        with mock.patch.object(
+            export_service, "compress_image", return_value=b"smaller"
+        ) as compress:
+            _maybe_compress(p, compress=False)
+        compress.assert_not_called()
+        self.assertEqual(p.read_bytes(), b"png-data")
+
+    def test_compress_writes_when_smaller(self):
+        p = self._png()
+        with mock.patch.object(
+            export_service, "compress_image", return_value=b"smaller"
+        ) as compress:
+            _maybe_compress(p, compress=True)
+        compress.assert_called_once()
+        self.assertEqual(p.read_bytes(), b"smaller")
+
+    def test_compress_error_keeps_original(self):
+        p = self._png()
+        with mock.patch.object(
+            export_service,
+            "compress_image",
+            side_effect=Exception("boom"),
+        ):
+            _maybe_compress(p, compress=True)
+        self.assertEqual(p.read_bytes(), b"png-data")
 
 
 if __name__ == "__main__":

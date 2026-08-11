@@ -53,7 +53,6 @@ print(f"PNG individual OK — {width}x{height}, {len(png)} bytes")
 # 2. Export ZIP masivo
 r = requests.post(f"{BASE}/api/export/all", json={
     "destination": "Machu Picchu",
-    "category": "dato_curioso",
     "count": 3,
     "language": "es",
     "template_id": "cinco-datos",

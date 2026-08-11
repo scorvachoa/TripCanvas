@@ -23,9 +23,6 @@ const Editor = {
       this.markDirty();
       this.rerender();
     });
-    document.getElementById('e-category').addEventListener('change', (e) => {
-      this.regenerateCategory(e.target.value);
-    });
 
     document.getElementById('d-template').addEventListener('change', async (e) => {
       App.state.template = e.target.value;
@@ -72,19 +69,6 @@ const Editor = {
   async syncTemplateSelect() {
     const select = document.getElementById('d-template');
     select.value = App.state.template;
-  },
-
-  async regenerateCategory(category) {
-    if (category === App.state.category) return;
-    App.state.category = category;
-    const cats = await API.categories.list();
-    const match = cats.find((c) => c.id === category);
-    if (match && match.template) App.state.template = match.template;
-    await this.syncTemplateSelect();
-    App.state.currentIndex = 0;
-    this.updateCounter();
-    this.loadCardIntoPanel(App.state.cards[App.state.currentIndex]);
-    await renderPreview();
   },
 
   onFieldInput(e) {
@@ -192,7 +176,6 @@ const Editor = {
     this.updateCounter();
     await this.syncTemplateSelect();
     document.getElementById('d-format').value = App.state.format;
-    document.getElementById('e-category').value = App.state.category;
     const card = App.state.cards[App.state.currentIndex];
     this.loadCardIntoPanel(card);
     await renderPreview();
@@ -244,7 +227,6 @@ const Editor = {
       const project = await API.projects.get(projectId);
       App.state = {
         destination: project.destination || '',
-        category: (project.cards[0] && project.cards[0].type) || 'dato_curioso',
         cards: project.cards || [],
         template: project.template || 'dato-curioso',
         format: project.format || 'instagram_portrait',
@@ -282,7 +264,6 @@ const Editor = {
     if (draft && Array.isArray(draft.cards) && draft.cards.length) {
       App.state = {
         destination: draft.destination || '',
-        category: draft.category || 'dato_curioso',
         cards: draft.cards,
         template: draft.template || 'dato-curioso',
         format: draft.format || 'instagram_portrait',
@@ -296,7 +277,6 @@ const Editor = {
       const template = (draft && draft.template) || params.get('template') || 'dato-curioso';
       App.state = {
         destination: '',
-        category: 'dato_curioso',
         cards: [],
         template,
         format: 'instagram_portrait',

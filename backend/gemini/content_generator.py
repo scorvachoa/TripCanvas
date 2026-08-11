@@ -3,7 +3,7 @@ import logging
 from config import PEXELS_API_KEY
 from gemini.client import GeminiClient, get_client
 from gemini.prompts import build_correction_prompt, build_generation_prompt
-from models.content import GenerateRequest, GenerationResult
+from models.content import GenerationResult
 from services.pexels_service import search_photo_urls
 from services.validation_service import (
     extract_json,
@@ -20,33 +20,38 @@ MAX_IMAGE_GENERATIONS = 8
 
 
 def generate_content(
-    request: GenerateRequest, client: GeminiClient | None = None
+    destination: str,
+    category: str,
+    count: int,
+    language: str = "es",
+    with_images: bool = True,
+    client: GeminiClient | None = None,
 ) -> GenerationResult:
     client = client or get_client()
 
     prompt = build_generation_prompt(
-        destination=request.destination,
-        category=request.category,
-        count=request.count,
-        language=request.language,
+        destination=destination,
+        category=category,
+        count=count,
+        language=language,
     )
 
     raw = client.generate(prompt, temperature=0.8)
     data = extract_json(raw)
 
-    validation = validate_response(data, expected_count=request.count, category=request.category)
+    validation = validate_response(data, expected_count=count, category=category)
     corrections = 0
 
     while not validation.valid and corrections < MAX_CORRECTIONS:
         correction_prompt = build_correction_prompt(
             raw_response=raw,
             validation_errors=validation.errors,
-            category=request.category,
-            count=request.count,
+            category=category,
+            count=count,
         )
         raw = client.generate(correction_prompt, temperature=0.4)
         data = extract_json(raw)
-        validation = validate_response(data, expected_count=request.count, category=request.category)
+        validation = validate_response(data, expected_count=count, category=category)
         corrections += 1
 
     if not validation.valid:
@@ -54,8 +59,8 @@ def generate_content(
 
     result = to_generation_result(data)
     _apply_numbering(result)
-    _apply_types(result, request.category)
-    if request.with_images:
+    _apply_types(result, category)
+    if with_images:
         _apply_destination_images(result)
     return result
 
