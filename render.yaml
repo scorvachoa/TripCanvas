@@ -20,10 +20,9 @@ services:
         sync: false
       - key: MYSQL_PASSWORD
         sync: false
-      # CA de Aiven en base64 (no se puede montar archivos en Render).
-      # Se obtiene con: base64 -w0 ca.pem  (Linux) o certutil -encode ca.pem
-      - key: MYSQL_SSL_CA_B64
-        sync: false
+      # SSL opcional: la conexión local funciona sin CA (Aiven no lo exige).
+      # Solo si quieres verificar el certificado, añade MYSQL_SSL_CA_B64 con el
+      # CA de tu proyecto (consola Aiven -> Overview -> CA Certificate) en base64.
       # --- Valores fijos ---
       - key: MYSQL_HOST
         value: tripcanvas-scorvachoa.l.aivencloud.com

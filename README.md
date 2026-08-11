@@ -141,7 +141,7 @@ El repo incluye `Dockerfile`, `.dockerignore` y `render.yaml` (Blueprint).
 3. **Variables de entorno** (dashboard de Render o `render.yaml`):
    - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `MYSQL_PASSWORD`
    - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_DB`
-   - `MYSQL_SSL_CA_B64`: el certificado CA de Aiven en base64 (`base64 -w0 ca.pem` en Linux, `certutil -encode` en Windows). En Render no se pueden montar archivos, así que el backend lo decodifica a un archivo temporal al arrancar.
+   - SSL es **opcional**: en local la conexión funciona sin CA (Aiven no lo exige). Si quieres verificar el certificado, define `MYSQL_SSL_CA_B64` con el CA de tu proyecto (consola Aiven → Overview → CA Certificate) en base64; el backend lo decodifica a un archivo temporal al arrancar.
 4. El health check usa `/healthz` (no consulta la BD, evita reinicios en bucle).
 5. Render inyecta `$PORT`; el contenedor escucha ahí. `output/` es efímero en Render (los PNG y backups no persisten).
 
