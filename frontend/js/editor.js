@@ -291,9 +291,6 @@ const Editor = {
         currentIndex: 0,
         language: draft.language || 'es',
       };
-      if (draft.cards[0] && !draft.cardType) {
-        App.state.category = draft.category || 'dato_curioso';
-      }
       document.getElementById('editor-project-name').textContent = App.state.projectName;
     } else {
       const template = (draft && draft.template) || params.get('template') || 'dato-curioso';

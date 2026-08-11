@@ -1,12 +1,17 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from api import export, generation, projects
 from config import CORS_ORIGINS, FRONTEND_DIR
+from services import mysql_storage
+from services.export_service import _close_browser
+
+logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,7 +19,22 @@ logging.basicConfig(
 )
 
 
-app = FastAPI(title="TripCanvas API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        mysql_storage.init_schema()
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger("uvicorn.error").error(
+            "No se pudo conectar a MySQL (Aiven). Revisa las variables "
+            "MYSQL_* en .env (host, puerto, usuario y password). %s", exc
+        )
+        raise
+    yield
+    await _close_browser()
+    mysql_storage.close_pool()
+
+
+app = FastAPI(title="TripCanvas API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,8 +50,16 @@ app.include_router(export.router)
 
 
 @app.get("/api/health")
-def health() -> dict:
-    return {"status": "ok"}
+def health() -> JSONResponse:
+    try:
+        mysql_storage.ping()
+        return JSONResponse({"status": "ok", "database": "ok"})
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Health check: BD no disponible: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "error"},
+        )
 
 
 _PAGE_FILES = {

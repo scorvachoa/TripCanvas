@@ -4,11 +4,34 @@ from typing import Any
 
 from models.content import Card, GenerationResult, ValidationResult
 
+# Campos requeridos por categoría, alineados con lo que renderizan las plantillas.
+# Las claves con '.' referencian subcampos dentro de `extra`.
+CATEGORY_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
+    "dato_curioso": ("title", "body"),
+    "sabias_que": ("question", "answer"),
+    "historia": ("title", "body", "extra.fecha"),
+    "mito_realidad": ("title", "myth", "reality"),
+    "quiz": ("question", "answer", "options"),
+    "comparativa": ("title", "body", "extra.items"),
+    "guia_rapida": ("title", "facts"),
+    "cinco_datos": ("title", "facts"),
+    "consejos": ("title", "facts"),
+    "cultura": ("title", "body", "facts"),
+    "arquitectura": ("title", "body"),
+    "naturaleza": ("title", "body", "facts"),
+    "como_llegar": ("title", "facts"),
+    "mejor_epoca": ("title", "facts"),
+    "informacion_general": ("title", "body", "facts"),
+}
 
-class ValidationError(Exception):
-    def __init__(self, errors: list[str]):
-        super().__init__("; ".join(errors))
-        self.errors = errors
+
+def _get_field(card: dict[str, Any], field: str) -> Any:
+    """Obtiene un campo de la tarjeta; soporta rutas tipo 'extra.fecha'."""
+    if "." in field:
+        key, sub = field.split(".", 1)
+        value = card.get(key)
+        return value.get(sub, "") if isinstance(value, dict) else ""
+    return card.get(field)
 
 
 def extract_json(text: str) -> dict[str, Any] | None:
@@ -52,8 +75,33 @@ def _validate_card(card: dict[str, Any], index: int, errors: list[str]) -> None:
         errors.append(f"Tarjeta {index + 1}: contenido vacío.")
 
 
+def _validate_category(card: dict[str, Any], category: str, index: int, errors: list[str]) -> None:
+    """Comprueba los campos requeridos por la categoría."""
+    for field in CATEGORY_REQUIRED_FIELDS.get(category, ()):
+        value = _get_field(card, field)
+        if field == "options":
+            if not isinstance(value, list) or len(value) < 2:
+                errors.append(
+                    f"Tarjeta {index + 1}: 'quiz' requiere al menos 2 opciones en 'options'."
+                )
+        elif field == "extra.items":
+            if not isinstance(value, list) or not value:
+                errors.append(
+                    f"Tarjeta {index + 1}: 'comparativa' requiere una lista en 'extra.items'."
+                )
+        elif field == "facts":
+            if not isinstance(value, list) or not value:
+                errors.append(
+                    f"Tarjeta {index + 1}: la categoría '{category}' requiere datos en 'facts'."
+                )
+        elif not str(value or "").strip():
+            errors.append(
+                f"Tarjeta {index + 1}: la categoría '{category}' requiere el campo '{field}'."
+            )
+
+
 def validate_response(
-    data: dict[str, Any] | None, expected_count: int
+    data: dict[str, Any] | None, expected_count: int, category: str = ""
 ) -> ValidationResult:
     errors: list[str] = []
 
@@ -75,6 +123,7 @@ def validate_response(
                 errors.append(f"Tarjeta {i + 1} no es un objeto válido.")
                 continue
             _validate_card(card, i, errors)
+            _validate_category(card, category, i, errors)
             title = str(card.get("title") or "").strip().lower()
             if title in seen_titles and title:
                 errors.append(f"Título duplicado: '{card.get('title')}'.")

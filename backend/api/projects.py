@@ -1,12 +1,10 @@
-import json
 import logging
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 from models.content import Card
 from models.project import Project, ProjectCreate, ProjectUpdate
-from services import json_storage
+from services import mysql_storage as storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["projects"])
@@ -69,7 +67,7 @@ def dict_to_project(data: dict) -> Project:
 
 
 def _get_or_404(project_id: str) -> dict:
-    data = json_storage.get_project(project_id)
+    data = storage.get_project(project_id)
     if data is None:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
     return data
@@ -78,7 +76,7 @@ def _get_or_404(project_id: str) -> dict:
 @router.post("/projects", status_code=201)
 def create_project(payload: ProjectCreate) -> Project:
     cards = [card_to_dict(card) for card in payload.cards]
-    project = json_storage.create_project(
+    project = storage.create_project(
         name=payload.name,
         destination=payload.destination,
         template=payload.template,
@@ -90,7 +88,7 @@ def create_project(payload: ProjectCreate) -> Project:
 
 @router.get("/projects")
 def list_projects() -> list[dict]:
-    return json_storage.list_projects()
+    return storage.list_projects()
 
 
 @router.get("/projects/{project_id}")
@@ -101,7 +99,7 @@ def get_project(project_id: str) -> Project:
 @router.put("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate) -> Project:
     cards = [card_to_dict(card) for card in payload.cards] if payload.cards is not None else None
-    project = json_storage.update_project(
+    project = storage.update_project(
         project_id,
         name=payload.name,
         destination=payload.destination,
@@ -116,5 +114,5 @@ def update_project(project_id: str, payload: ProjectUpdate) -> Project:
 
 @router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str) -> None:
-    if not json_storage.delete_project(project_id):
+    if not storage.delete_project(project_id):
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")

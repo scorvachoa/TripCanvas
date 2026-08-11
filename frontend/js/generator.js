@@ -60,7 +60,8 @@ const Generator = {
     const category = document.getElementById('qg-category').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('qg-count').value || '5', 10), 1), 20);
     const language = document.getElementById('qg-language').value;
-    this.generate(dest, category, count, language, 'quick-gen-status', 'btn-quick-generate');
+    const withImages = this.checked('qg-with-images', true);
+    this.generate(dest, category, count, language, withImages, 'quick-gen-status', 'btn-quick-generate');
   },
 
   runCreateGenerate() {
@@ -68,10 +69,16 @@ const Generator = {
     const category = document.getElementById('c-category').value;
     const count = Math.min(Math.max(parseInt(document.getElementById('c-count').value || '5', 10), 1), 20);
     const language = document.getElementById('c-language').value;
-    this.generate(dest, category, count, language, 'create-status', 'btn-create-generate');
+    const withImages = this.checked('c-with-images', true);
+    this.generate(dest, category, count, language, withImages, 'create-status', 'btn-create-generate');
   },
 
-  async generate(destination, category, count, language, statusId, btnId) {
+  checked(id, defaultValue) {
+    const el = document.getElementById(id);
+    return el ? el.checked : defaultValue;
+  },
+
+  async generate(destination, category, count, language, withImages, statusId, btnId) {
     if (!destination) {
       this.setStatus(statusId, 'Selecciona un destino.', 'error');
       return;
@@ -80,12 +87,9 @@ const Generator = {
     const original = btn ? btn.innerHTML : '';
     if (btn) btn.disabled = true;
 
-    const messages = [
-      'Preparando contenido...',
-      'Consultando Gemini...',
-      'Generando tarjetas...',
-      'Preparando diseño...',
-    ];
+    const messages = withImages
+      ? ['Preparando contenido...', 'Consultando Gemini...', 'Generando tarjetas...', 'Generando fotos del destino...']
+      : ['Preparando contenido...', 'Consultando Gemini...', 'Generando tarjetas...', 'Preparando diseño...'];
 
     try {
       for (const msg of messages) {
@@ -93,7 +97,7 @@ const Generator = {
         await new Promise((r) => setTimeout(r, 350));
       }
 
-      const result = await API.generate({ destination, category, count, language });
+      const result = await API.generate({ destination, category, count, language, with_images: withImages });
       this.clearStatus(statusId);
       App.launchEditor({
         destination: result.destination || destination,

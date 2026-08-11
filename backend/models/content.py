@@ -33,6 +33,7 @@ class GenerateRequest(BaseModel):
     category: str
     count: int = Field(ge=1, le=20, default=1)
     language: str = "es"
+    with_images: bool = True
 
 
 class ValidationResult(BaseModel):

@@ -1,10 +1,9 @@
 import html as html_module
-import io
-import json
 import logging
 import re
 import urllib.request
 import zipfile
+from functools import lru_cache
 from pathlib import Path
 
 from config import OUTPUT_DIR
@@ -81,17 +80,13 @@ def _image_url(value) -> str:
     return html_module.escape(url, quote=False)
 
 
-def _embed_image(value) -> str:
-    """Devuelve la imagen como data URL base64 si es posible.
+@lru_cache(maxsize=64)
+def _fetch_embed(url: str) -> str:
+    """Descarga la imagen y la devuelve como data URL base64 (cacheado).
 
-    Al incrustar la imagen en el HTML de exportación el PNG ya no depende de que
-    el servidor (Playwright) pueda alcanzar la URL original (403 externos,
-    hotlink, firewalls, etc.) que sí carga el navegador del usuario en la
-    preview. Si no se puede descargar, devuelve la URL original.
+    La caché evita volver a descargar la misma imagen en cada render del
+    preview/export. Si no se puede descargar, devuelve la URL original.
     """
-    url = str(value or "").strip()
-    if not url or url.startswith("data:"):
-        return url
     try:
         import base64
         import mimetypes
@@ -115,6 +110,24 @@ def _embed_image(value) -> str:
     except Exception as exc:  # noqa: BLE001
         logger.warning("No se pudo incrustar la imagen (%s); usando URL", exc)
         return url
+
+
+def _embed_image(value) -> str:
+    """Devuelve la imagen como data URL base64 si es posible.
+
+    Al incrustar la imagen en el HTML de exportación el PNG ya no depende de que
+    el servidor (Playwright) pueda alcanzar la URL original (403 externos,
+    hotlink, firewalls, etc.) que sí carga el navegador del usuario en la
+    preview. Si no se puede descargar, devuelve la URL original.
+    """
+    url = str(value or "").strip()
+    if not url or url.startswith("data:"):
+        return url
+    # Solo http/https: evitar SSRF/lectura de archivos locales vía file://, etc.
+    if not url.lower().startswith(("http://", "https://")):
+        logger.warning("URL de imagen con esquema no permitido; se omite el incrustado")
+        return url
+    return _fetch_embed(url)
 
 
 def _inject_card_photo(card_html: str, image: str) -> str:
@@ -345,22 +358,66 @@ async def export_card_png(
     return await _capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
 
 
-async def _capture_png(html_content: str, format_id: str, suffix=1, output_dir: Path | None = None) -> Path:
-    from playwright.async_api import async_playwright
+async def _get_browser():
+    """Devuelve un navegador Chromium compartido, lanzándolo si es necesario.
 
+    Lanzar Chromium cuesta ~1-2s; al reutilizar la instancia entre peticiones
+    las exportaciones sucesivas son mucho más rápidas. `asyncio.Lock` evita que
+    dos peticiones concurrentes lancen dos navegadores.
+    """
+    global _playwright, _browser, _browser_lock
+    if _browser_lock is None:
+        import asyncio
+
+        _browser_lock = asyncio.Lock()
+    async with _browser_lock:
+        if _browser is not None and _browser.is_connected():
+            return _browser
+        from playwright.async_api import async_playwright
+
+        if _playwright is None:
+            _playwright = await async_playwright().start()
+        _browser = await _playwright.chromium.launch()
+        return _browser
+
+
+async def _close_browser() -> None:
+    """Cierra el navegador y el runtime de Playwright (llamar al apagar la app)."""
+    global _playwright, _browser
+    if _browser is not None:
+        try:
+            await _browser.close()
+        except Exception:  # noqa: BLE001
+            pass
+        _browser = None
+    if _playwright is not None:
+        try:
+            await _playwright.stop()
+        except Exception:  # noqa: BLE001
+            pass
+        _playwright = None
+
+
+_playwright = None
+_browser = None
+_browser_lock = None
+
+
+async def _capture_png(html_content: str, format_id: str, suffix=1, output_dir: Path | None = None) -> Path:
     out = output_dir or OUTPUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     width, height = format_size(format_id)
 
     file_path = out / f"card_{suffix:02d}.png"
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page(viewport={"width": width, "height": height})
+    browser = await _get_browser()
+    page = await browser.new_page(viewport={"width": width, "height": height})
+    try:
         await page.set_content(html_content, wait_until="networkidle")
         element = page.locator(".travel-card")
         await element.screenshot(path=str(file_path))
-        await browser.close()
+    finally:
+        await page.close()
 
     return file_path
 
@@ -374,8 +431,6 @@ async def export_cards_zip(
     output_dir: Path | None = None,
 ) -> Path:
     """Genera un ZIP con las tarjetas en PNG y un copy.txt con los textos."""
-    from playwright.async_api import async_playwright
-
     out = output_dir or OUTPUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     width, height = format_size(format_id)
@@ -384,24 +439,24 @@ async def export_cards_zip(
 
     pages: list[tuple[Path, Card]] = []
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        for i, card in enumerate(cards, start=1):
-            html_content = render_card_html(
-                card,
-                template_id,
-                destination=destination,
-                format_id=format_id,
-                design=design,
-            )
-            page = await browser.new_page(viewport={"width": width, "height": height})
+    browser = await _get_browser()
+    for i, card in enumerate(cards, start=1):
+        html_content = render_card_html(
+            card,
+            template_id,
+            destination=destination,
+            format_id=format_id,
+            design=design,
+        )
+        page = await browser.new_page(viewport={"width": width, "height": height})
+        try:
             await page.set_content(html_content, wait_until="networkidle")
             element = page.locator(".travel-card")
             png_path = out / f"_bulk_{i:02d}.png"
             await element.screenshot(path=str(png_path))
             pages.append((png_path, card))
+        finally:
             await page.close()
-        await browser.close()
 
     with zipfile.ZipFile(zip_path, "w") as zf:
         for i, (png_path, card) in enumerate(pages, start=1):

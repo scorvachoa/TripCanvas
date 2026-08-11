@@ -32,6 +32,8 @@
 
 .quick-gen-actions { grid-column: 1 / -1; margin-top: 4px; }
 
+.quick-gen-full { grid-column: 1 / -1; margin-bottom: 0; }
+
 /* Proyectos recientes */
 .project-card {
   background: var(--surface-2);

@@ -34,6 +34,19 @@ const API = {
     return res.blob();
   },
 
+  async postText(path, body) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data && data.detail) || 'Error al renderizar.');
+    }
+    return res.text();
+  },
+
   categories: {
     list: () => API.get('/api/categories'),
   },
@@ -53,4 +66,5 @@ const API = {
     one: (payload) => API.getBlob('/api/export', payload),
     all: (payload) => API.getBlob('/api/export/all', payload),
   },
+  preview: (payload) => API.postText('/api/preview', payload),
 };

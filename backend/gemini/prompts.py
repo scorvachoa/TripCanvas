@@ -97,7 +97,8 @@ SCHEMA_HINT = """Cada tarjeta debe ser un objeto con esta forma:
   "extra": {},  // datos extra opcionales (ej. fecha, correct_index, items)
   "location": "ciudad, país",
   "altitude": "altitud en m s. n. m.",
-  "source": "fuente o institución (ej. UNESCO)"
+  "source": "fuente o institución (ej. UNESCO)",
+  "image_query": "búsqueda corta para encontrar una foto real del destino en un banco de imágenes (ej. 'Machu Picchu terrazas amanecer'). Describe solo el lugar/escena, sin el nombre de la marca ni texto."
 }
 """
 
@@ -122,6 +123,7 @@ Idioma de todo el contenido: {lang}
 REGLAS:
 - Genera exactamente {count} tarjetas DIFERENTES entre sí.
 - Siempre completa 'title' y 'body' aunque sean breves: son los campos principales que se muestran.
+- Completa siempre 'image_query': una búsqueda corta (2-6 palabras) para encontrar una foto real del destino.
 - {guidance}
 - NO inventes datos. Si no estás seguro, omite el campo.
 - Todo el contenido debe estar en {lang}.
