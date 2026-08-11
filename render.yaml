@@ -1,0 +1,35 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Requisito previo: en la consola de Aiven (Service settings -> Allowed IP
+# addresses) añadir 0.0.0.0/0 para permitir conexiones desde Render.
+
+services:
+  - type: web
+    name: tripcanvas
+    runtime: docker
+    plan: free
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      # --- Secretos: se configuran manualmente en el dashboard de Render ---
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY_1
+        sync: false
+      - key: PEXELS_API_KEY
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      # CA de Aiven en base64 (no se puede montar archivos en Render).
+      # Se obtiene con: base64 -w0 ca.pem  (Linux) o certutil -encode ca.pem
+      - key: MYSQL_SSL_CA_B64
+        sync: false
+      # --- Valores fijos ---
+      - key: MYSQL_HOST
+        value: tripcanvas-scorvachoa.l.aivencloud.com
+      - key: MYSQL_PORT
+        value: "10379"
+      - key: MYSQL_USER
+        value: avnadmin
+      - key: MYSQL_DB
+        value: defaultdb

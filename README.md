@@ -132,6 +132,19 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 - Si el servidor no puede conectar con MySQL al arrancar, se registra un error claro y el proceso se detiene (fail-fast).
 - El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP; los endpoints de exportación (`/api/export`, `/api/export/all`) a 5 (en memoria; se reinicia al reiniciar el servidor).
 
+## Despliegue en Render
+
+El repo incluye `Dockerfile`, `.dockerignore` y `render.yaml` (Blueprint).
+
+1. **Aiven**: en la consola de Aiven (Service settings → Allowed IP addresses) añade `0.0.0.0/0` para permitir conexiones desde Render (sus IPs no son fijas).
+2. **Crea un Web Service en Render** desde el repo (runtime Docker) o conecta el Blueprint con `render.yaml`.
+3. **Variables de entorno** (dashboard de Render o `render.yaml`):
+   - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `MYSQL_PASSWORD`
+   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_DB`
+   - `MYSQL_SSL_CA_B64`: el certificado CA de Aiven en base64 (`base64 -w0 ca.pem` en Linux, `certutil -encode` en Windows). En Render no se pueden montar archivos, así que el backend lo decodifica a un archivo temporal al arrancar.
+4. El health check usa `/healthz` (no consulta la BD, evita reinicios en bucle).
+5. Render inyecta `$PORT`; el contenedor escucha ahí. `output/` es efímero en Render (los PNG y backups no persisten).
+
 ## Pruebas
 
 ```bash

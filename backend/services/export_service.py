@@ -377,7 +377,9 @@ async def _get_browser():
 
         if _playwright is None:
             _playwright = await async_playwright().start()
-        _browser = await _playwright.chromium.launch()
+        # --no-sandbox es necesario al correr como root (Docker/Render);
+        # no afecta al desarrollo local.
+        _browser = await _playwright.chromium.launch(args=["--no-sandbox"])
         return _browser
 
 

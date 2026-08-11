@@ -1,0 +1,17 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.gitignore
+output/
+tests/
+node_modules/
+.vscode/
+.idea/
+Dockerfile
+render.yaml
+.dockerignore

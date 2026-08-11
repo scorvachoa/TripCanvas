@@ -62,6 +62,16 @@ def health() -> JSONResponse:
         )
 
 
+@app.get("/healthz")
+def healthz() -> JSONResponse:
+    """Health check ligero para el orquestador (Render, etc.).
+
+    No consulta la BD: si Aiven tarda en responder, este endpoint sigue
+    devolviendo 200 y el servicio no se reinicia en bucle.
+    """
+    return JSONResponse({"status": "ok"})
+
+
 _PAGE_FILES = {
     "/crear": "crear.html",
     "/proyectos": "proyectos.html",

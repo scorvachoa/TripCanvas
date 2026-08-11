@@ -48,6 +48,18 @@ MYSQL_PASSWORD = _get("MYSQL_PASSWORD")
 MYSQL_DB = _get("MYSQL_DB", "defaultdb")
 # Ruta al certificado CA (opcional). Si se define, la conexión usa SSL.
 MYSQL_SSL_CA = _get("MYSQL_SSL_CA") or None
+# Alternativa para despliegues (Render): el contenido del CA en base64. Los
+# entornos PaaS no permiten montar archivos, así que se escribe en un archivo
+# temporal al arrancar.
+if not MYSQL_SSL_CA:
+    import base64
+    import tempfile
+
+    _ca_b64 = _get("MYSQL_SSL_CA_B64")
+    if _ca_b64:
+        _ca_path = Path(tempfile.gettempdir()) / "tripcanvas_ca.pem"
+        _ca_path.write_bytes(base64.b64decode(_ca_b64))
+        MYSQL_SSL_CA = str(_ca_path)
 
 CORS_ORIGINS = [
     origin.strip()
