@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from models.content import Card
 from models.project import Project, ProjectCreate, ProjectUpdate
-from services import mysql_storage as storage
+from services import supabase_storage as storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["projects"])

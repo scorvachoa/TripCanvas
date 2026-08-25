@@ -9,7 +9,7 @@ Herramienta web para crear tarjetas visuales sobre destinos turísticos de Perú
 - Una clave de API de Google Gemini
 - Una API key de Pexels (gratuita en https://www.pexels.com/api/) para las fotos automáticas del destino
 - Una API key de Tinify/TinyPNG (opcional, https://tinypng.com/developers) para comprimir los PNG al exportar (500 compresiones gratis al mes)
-- Una base de datos MySQL (p. ej. Aiven for MySQL) con un usuario y password
+- Una base de datos PostgreSQL (p. ej. Supabase) con un usuario y password
 
 ## Instalación
 
@@ -22,13 +22,9 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 
 # 3. Configurar credenciales
-# Copia .env.example a .env y completa GEMINI_API_KEY y las variables MYSQL_*:
+# Copia .env.example a .env y completa GEMINI_API_KEY y DATABASE_URL:
 #   GEMINI_API_KEY=tu_clave
-#   MYSQL_HOST=host.l.aivencloud.com
-#   MYSQL_PORT=10379
-#   MYSQL_USER=avnadmin
-#   MYSQL_PASSWORD=tu_password
-#   MYSQL_DB=defaultdb
+#   DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-[REGION].pooler.supabase.com:6543/postgres
 # Para rotación automática ante límites de cuota, añade más claves numeradas:
 #   GEMINI_API_KEY_1=clave2
 #   GEMINI_API_KEY_2=clave3
@@ -69,7 +65,7 @@ La aplicación es **multi-página** (HTML separados servidos por FastAPI):
 - **IA:** Google Gemini (módulo aislado en `backend/gemini/`)
 - **Fotos del destino:** Pexels (`services/pexels_service.py`); Gemini propone la búsqueda por tarjeta
 - **Compresión PNG:** Tinify/TinyPNG (`services/tinify_service.py`), opcional y best-effort al exportar
-- **Almacenamiento:** MySQL (Aiven) vía PyMySQL con pool de conexiones; la tabla `projects` se crea automáticamente al arrancar
+- **Almacenamiento:** PostgreSQL (Supabase) vía psycopg con pool de conexiones; la tabla `projects` se crea automáticamente al arrancar
 - **Exportación:** Playwright (renderiza el HTML/CSS real a PNG en un directorio temporal por petición)
 - **Rate limit:** 10 solicitudes de generación, 5 de exportación y 120 de preview por minuto y por IP (en memoria)
 
@@ -82,7 +78,7 @@ backend/
   gemini/              # Cliente, prompts y generador de contenido (aislado)
   api/                 # Endpoints: generation, projects, export
   models/              # Modelos Pydantic (content, project)
-  services/            # export, validation, template, mysql_storage, pexels_service, tinify_service, rate_limit
+  services/            # export, validation, template, supabase_storage, pexels_service, tinify_service, rate_limit
 tests/                 # Unit tests (unittest, sin servidor ni API key)
 frontend/
   index.html           # Home informativo
@@ -130,22 +126,20 @@ output/                # Exportaciones generadas y backups (backups/projects-<fe
 - Los formatos soportados: Instagram Portrait (1080×1350), Square (1080×1080), Story (1080×1920).
 - La exportación reutiliza una única instancia de Chromium (Playwright) entre peticiones; las imágenes remotas se incrustan en base64 (con caché) cuando el servidor no puede alcanzarlas (403/hotlink/firewalls).
 - Los `template_id` se validan con regex (`^[a-zA-Z0-9_-]+$`) para evitar path traversal.
-- Los proyectos se guardan en MySQL (`services/mysql_storage.py`); un **pool de conexiones** acotado (máx. 5, `queue.Queue`) evita el coste del handshake TLS por petición. Al obtener una conexión se verifica que siga viva (`SELECT 1`) y se recrea si el servidor la dejó caer; las conexiones que no caben en el pool se cierran. La tabla `projects` se crea con `CREATE TABLE IF NOT EXISTS` en el arranque.
-- `/api/health` comprueba la conexión a MySQL y devuelve `{"status":"ok","database":"ok"}` (o HTTP 503 si la BD no responde); el pool se cierra limpio al apagar el servidor.
+- Los proyectos se guardan en PostgreSQL/Supabase (`services/supabase_storage.py`); un **pool de conexiones** acotado (máx. 5, `queue.Queue`) evita el coste de abrir una conexión por petición. Al obtener una conexión se verifica que siga viva (`SELECT 1`) y se recrea si el servidor la dejó caer; las conexiones que no caben en el pool se cierran. La tabla `projects` se crea con `CREATE TABLE IF NOT EXISTS` en el arranque.
+- `/api/health` comprueba la conexión a PostgreSQL y devuelve `{"status":"ok","database":"ok"}` (o HTTP 503 si la BD no responde); el pool se cierra limpio al apagar el servidor.
 - **Backups:** `scripts\backup_db.py` exporta todos los proyectos a `output\backups\projects-<fecha>.json` (columnas completas) y permite restaurarlos con `--restore` (upsert, seguro de re-ejecutar). `output/` está en `.gitignore`, así que los backups no se suben al repositorio.
-- Si el servidor no puede conectar con MySQL al arrancar, se registra un error claro y el proceso se detiene (fail-fast).
+- Si el servidor no puede conectar con PostgreSQL al arrancar, se registra un error claro y el proceso se detiene (fail-fast).
 - El endpoint `/api/generate` está limitado a 10 peticiones por minuto y por IP, la exportación (`/api/export`, `/api/export/all`) a 5 y la preview (`/api/preview`) a 120 (en memoria; se reinician al reiniciar el servidor).
 
 ## Despliegue en Render
 
 El repo incluye `Dockerfile`, `.dockerignore` y `render.yaml` (Blueprint).
 
-1. **Aiven**: en la consola de Aiven (Service settings → Allowed IP addresses) añade `0.0.0.0/0` para permitir conexiones desde Render (sus IPs no son fijas).
+1. **Supabase**: crea un proyecto en [Supabase](https://supabase.com) y obtén la `DATABASE_URL` desde Settings → Database → Connection string → URI (modo Session o Transaction pooler).
 2. **Crea un Web Service en Render** desde el repo (runtime Docker) o conecta el Blueprint con `render.yaml`.
 3. **Variables de entorno** (dashboard de Render o `render.yaml`):
-   - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `TINIFY_API_KEY` (opcional), `MYSQL_PASSWORD`
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_DB`
-   - SSL es **opcional**: en local la conexión funciona sin CA (Aiven no lo exige). Si quieres verificar el certificado, define `MYSQL_SSL_CA_B64` con el CA de tu proyecto (consola Aiven → Overview → CA Certificate) en base64; el backend lo decodifica a un archivo temporal al arrancar.
+   - `GEMINI_API_KEY`, `GEMINI_API_KEY_1` (opcional, rotación), `PEXELS_API_KEY`, `TINIFY_API_KEY` (opcional), `DATABASE_URL`
 4. El health check usa `/healthz` (no consulta la BD, evita reinicios en bucle).
 5. Render inyecta `$PORT`; el contenedor escucha ahí. `output/` es efímero en Render (los PNG y backups no persisten).
 

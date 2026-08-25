@@ -45,26 +45,8 @@ DATA_DIR = BASE_DIR / "data"
 TEMPLATES_DIR = BASE_DIR / "templates"
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-# MySQL (Aiven). El backend guarda los proyectos aquí.
-MYSQL_HOST = _get("MYSQL_HOST")
-MYSQL_PORT = int(_get("MYSQL_PORT", "10379"))
-MYSQL_USER = _get("MYSQL_USER", "avnadmin")
-MYSQL_PASSWORD = _get("MYSQL_PASSWORD")
-MYSQL_DB = _get("MYSQL_DB", "defaultdb")
-# Ruta al certificado CA (opcional). Si se define, la conexión usa SSL.
-MYSQL_SSL_CA = _get("MYSQL_SSL_CA") or None
-# Alternativa para despliegues (Render): el contenido del CA en base64. Los
-# entornos PaaS no permiten montar archivos, así que se escribe en un archivo
-# temporal al arrancar.
-if not MYSQL_SSL_CA:
-    import base64
-    import tempfile
-
-    _ca_b64 = _get("MYSQL_SSL_CA_B64")
-    if _ca_b64:
-        _ca_path = Path(tempfile.gettempdir()) / "tripcanvas_ca.pem"
-        _ca_path.write_bytes(base64.b64decode(_ca_b64))
-        MYSQL_SSL_CA = str(_ca_path)
+# PostgreSQL (Supabase). El backend guarda los proyectos aquí.
+DATABASE_URL = _get("DATABASE_URL")
 
 CORS_ORIGINS = [
     origin.strip()

@@ -1,6 +1,4 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
-# Requisito previo: en la consola de Aiven (Service settings -> Allowed IP
-# addresses) añadir 0.0.0.0/0 para permitir conexiones desde Render.
 
 services:
   - type: web
@@ -20,17 +18,5 @@ services:
         sync: false
       - key: TINIFY_API_KEY
         sync: false
-      - key: MYSQL_PASSWORD
+      - key: DATABASE_URL
         sync: false
-      # SSL opcional: la conexión local funciona sin CA (Aiven no lo exige).
-      # Solo si quieres verificar el certificado, añade MYSQL_SSL_CA_B64 con el
-      # CA de tu proyecto (consola Aiven -> Overview -> CA Certificate) en base64.
-      # --- Valores fijos ---
-      - key: MYSQL_HOST
-        value: tripcanvas-scorvachoa.l.aivencloud.com
-      - key: MYSQL_PORT
-        value: "10379"
-      - key: MYSQL_USER
-        value: avnadmin
-      - key: MYSQL_DB
-        value: defaultdb

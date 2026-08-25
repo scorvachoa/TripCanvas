@@ -1,12 +1,11 @@
-"""Almacenamiento en MySQL (Aiven).
+"""Almacenamiento en PostgreSQL (Supabase).
 
-Reemplaza el almacenamiento en archivos JSON. La tabla `projects` se crea
+Reemplaza el almacenamiento en MySQL (Aiven). La tabla `projects` se crea
 automáticamente al arrancar (ver `init_schema`).
 
 Las operaciones usan un pequeño pool de conexiones acotado (POOL_MAXSIZE) que
 se valida y reconecta al obtener una conexión, evitando el coste de abrir una
-conexión nueva por petición (handshake TLS + autenticación a Aiven). MySQL
-resuelve la concurrencia con transacciones.
+conexión nueva por petición. PostgreSQL resuelve la concurrencia con transacciones.
 
 Esquema de la tabla:
 
@@ -27,16 +26,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-import pymysql
+import psycopg
+import psycopg.rows
 
-from config import (
-    MYSQL_DB,
-    MYSQL_HOST,
-    MYSQL_PASSWORD,
-    MYSQL_PORT,
-    MYSQL_SSL_CA,
-    MYSQL_USER,
-)
+from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +40,15 @@ CREATE TABLE IF NOT EXISTS projects (
     destination TEXT         NOT NULL,
     template    VARCHAR(64)  NOT NULL DEFAULT 'dato-curioso',
     format      VARCHAR(64)  NOT NULL DEFAULT 'instagram_portrait',
-    cards       JSON         NOT NULL,
+    cards       JSONB        NOT NULL,
     created_at  VARCHAR(64)  NOT NULL,
     updated_at  VARCHAR(64)  NOT NULL,
-    PRIMARY KEY (id),
-    INDEX idx_updated_at (updated_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    PRIMARY KEY (id)
+)
+"""
+
+CREATE_INDEX_SQL = """
+CREATE INDEX IF NOT EXISTS idx_updated_at ON projects (updated_at)
 """
 
 POOL_MAXSIZE = 5
@@ -63,25 +59,17 @@ _pool_lock = threading.Lock()
 _pool_total = 0
 
 
-def _connect() -> pymysql.Connection:
-    return pymysql.connect(
-        charset="utf8mb4",
+def _connect():
+    return psycopg.connect(
+        DATABASE_URL,
         connect_timeout=10,
-        cursorclass=pymysql.cursors.DictCursor,
-        db=MYSQL_DB,
-        host=MYSQL_HOST,
-        password=MYSQL_PASSWORD,
-        port=MYSQL_PORT,
-        user=MYSQL_USER,
-        read_timeout=10,
-        write_timeout=10,
-        ssl={"ca": MYSQL_SSL_CA} if MYSQL_SSL_CA else None,
+        options="-c statement_timeout=10000",
     )
 
 
-def _connection_alive(conn: pymysql.Connection) -> bool:
+def _connection_alive(conn) -> bool:
     """Comprueba que la conexión responde; si no, la cierra."""
-    if not conn.open:
+    if conn.closed:
         try:
             conn.close()
         except Exception:  # noqa: BLE001
@@ -99,7 +87,7 @@ def _connection_alive(conn: pymysql.Connection) -> bool:
         return False
 
 
-def _acquire_connection() -> pymysql.Connection:
+def _acquire_connection():
     """Obtiene una conexión del pool, creando una nueva si es necesario."""
     global _pool, _pool_total
     if _pool is None:
@@ -123,12 +111,12 @@ def _acquire_connection() -> pymysql.Connection:
     return conn
 
 
-def _release_connection(conn: pymysql.Connection) -> None:
+def _release_connection(conn) -> None:
     """Devuelve la conexión al pool; la cierra si el pool está lleno o está muerta."""
     if _pool is None:
         return
     try:
-        if conn.open:
+        if not conn.closed:
             _pool.put_nowait(conn)
         else:
             conn.close()
@@ -172,6 +160,8 @@ def _decode_cards(raw: Any) -> list[dict]:
             return []
     if isinstance(raw, list):
         return raw
+    if isinstance(raw, dict):
+        return []
     return []
 
 
@@ -204,8 +194,9 @@ def init_schema() -> None:
     try:
         with conn.cursor() as cur:
             cur.execute(CREATE_TABLE_SQL)
+            cur.execute(CREATE_INDEX_SQL)
         conn.commit()
-        logger.info("Tabla 'projects' lista en MySQL.")
+        logger.info("Tabla 'projects' lista en PostgreSQL (Supabase).")
     finally:
         _release_connection(conn)
 
@@ -213,7 +204,7 @@ def init_schema() -> None:
 def list_projects() -> list[dict]:
     conn = _acquire_connection()
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             cur.execute(
                 "SELECT id, name, destination, template, format, "
                 "created_at, updated_at, cards FROM projects ORDER BY updated_at DESC"
@@ -239,7 +230,7 @@ def list_projects() -> list[dict]:
 def get_project(project_id: str) -> dict | None:
     conn = _acquire_connection()
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             cur.execute("SELECT * FROM projects WHERE id=%s", (project_id,))
             row = cur.fetchone()
     finally:
@@ -251,7 +242,7 @@ def export_all() -> list[dict]:
     """Devuelve todos los proyectos completos (para backups)."""
     conn = _acquire_connection()
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             cur.execute("SELECT * FROM projects ORDER BY updated_at DESC")
             rows = cur.fetchall()
     finally:
@@ -310,9 +301,10 @@ def restore(projects: list[dict]) -> int:
                 cur.execute(
                     "INSERT INTO projects (id, name, destination, template, format, "
                     "cards, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
-                    "ON DUPLICATE KEY UPDATE name=VALUES(name), destination=VALUES(destination), "
-                    "template=VALUES(template), format=VALUES(format), cards=VALUES(cards), "
-                    "created_at=VALUES(created_at), updated_at=VALUES(updated_at)",
+                    "ON CONFLICT (id) DO UPDATE SET "
+                    "name=EXCLUDED.name, destination=EXCLUDED.destination, "
+                    "template=EXCLUDED.template, format=EXCLUDED.format, cards=EXCLUDED.cards, "
+                    "created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at",
                     (
                         p["id"],
                         p.get("name", ""),

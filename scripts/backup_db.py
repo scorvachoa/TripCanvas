@@ -1,4 +1,4 @@
-"""Copia de seguridad de los proyectos de MySQL a un archivo JSON local.
+"""Copia de seguridad de los proyectos de PostgreSQL a un archivo JSON local.
 
 Uso:
   .venv\\Scripts\\python scripts\\backup_db.py                # backup a output/backups/
@@ -6,7 +6,7 @@ Uso:
 
 El backup incluye todas las columnas de cada proyecto (id, name, destination,
 template, format, cards, created_at, updated_at). El restore hace un upsert
-(INSERT ... ON DUPLICATE KEY UPDATE), por lo que es seguro re-ejecutarlo.
+(INSERT ... ON CONFLICT ... DO UPDATE), por lo que es seguro re-ejecutarlo.
 """
 import argparse
 import json
@@ -17,13 +17,13 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
-from services import mysql_storage  # noqa: E402
+from services import supabase_storage  # noqa: E402
 
 BACKUP_DIR = Path("output") / "backups"
 
 
 def backup(path: Path) -> int:
-    projects = mysql_storage.export_all()
+    projects = supabase_storage.export_all()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "created_at": datetime.now().isoformat(),
@@ -39,11 +39,11 @@ def restore(path: Path) -> int:
         raise SystemExit(f"No existe el archivo de backup: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
     projects = data.get("projects", [])
-    return mysql_storage.restore(projects)
+    return supabase_storage.restore(projects)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Backup/restore de proyectos MySQL")
+    parser = argparse.ArgumentParser(description="Backup/restore de proyectos PostgreSQL")
     parser.add_argument(
         "--restore",
         metavar="ARCHIVO",

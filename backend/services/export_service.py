@@ -287,7 +287,8 @@ def render_card_html(
     )
     css_vars = (
         "--tc-bg: var(--bg); --tc-text: var(--text); --tc-accent: var(--accent); "
-        f"--tc-overlay: var(--overlay); --tc-text-scale: {text_scale};"
+        f"--tc-overlay: var(--overlay); --tc-font: {tokens['FONT']}; "
+        f"--tc-text-scale: {text_scale};"
     )
 
     return f"""<!DOCTYPE html>
@@ -295,7 +296,7 @@ def render_card_html(
 <head>
 <meta charset="utf-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&display=swap');
 
 :root {{
   --bg: {tokens['BG']};
@@ -336,6 +337,14 @@ def render_card_html(
 
 {LOGO_CSS}
 {template.css}
+
+.travel-card,
+.travel-card *:not(.tc-logo):not(.tc-logo *) {{
+  font-family: var(--tc-font);
+}}
+
+.travel-card.tc-has-photo {{ background-color: transparent !important; }}
+.travel-card.tc-has-photo .dc-overlay {{ background: transparent; }}
 </style>
 </head>
 <body>

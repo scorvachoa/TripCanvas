@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from api import export, generation, projects
 from config import CORS_ORIGINS, FRONTEND_DIR
-from services import mysql_storage
+from services import supabase_storage
 from services.export_service import _close_browser
 
 logger = logging.getLogger(__name__)
@@ -22,16 +22,16 @@ logging.basicConfig(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        mysql_storage.init_schema()
+        supabase_storage.init_schema()
     except Exception as exc:  # noqa: BLE001
         logging.getLogger("uvicorn.error").error(
-            "No se pudo conectar a MySQL (Aiven). Revisa las variables "
-            "MYSQL_* en .env (host, puerto, usuario y password). %s", exc
+            "No se pudo conectar a PostgreSQL (Supabase). Revisa la variable "
+            "DATABASE_URL en .env. %s", exc
         )
         raise
     yield
     await _close_browser()
-    mysql_storage.close_pool()
+    supabase_storage.close_pool()
 
 
 app = FastAPI(title="TripCanvas API", version="0.1.0", lifespan=lifespan)
@@ -52,7 +52,7 @@ app.include_router(export.router)
 @app.get("/api/health")
 def health() -> JSONResponse:
     try:
-        mysql_storage.ping()
+        supabase_storage.ping()
         return JSONResponse({"status": "ok", "database": "ok"})
     except Exception as exc:  # noqa: BLE001
         logger.error("Health check: BD no disponible: %s", exc)
@@ -66,7 +66,7 @@ def health() -> JSONResponse:
 def healthz() -> JSONResponse:
     """Health check ligero para el orquestador (Render, etc.).
 
-    No consulta la BD: si Aiven tarda en responder, este endpoint sigue
+    No consulta la BD: si Supabase tarda en responder, este endpoint sigue
     devolviendo 200 y el servicio no se reinicia en bucle.
     """
     return JSONResponse({"status": "ok"})

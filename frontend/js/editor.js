@@ -68,6 +68,10 @@ const Editor = {
 
   async syncTemplateSelect() {
     const select = document.getElementById('d-template');
+    const available = Array.from(select.options).map((o) => o.value);
+    if (!available.includes(App.state.template)) {
+      await App.setupTemplateSelect('d-template');
+    }
     select.value = App.state.template;
   },
 
