@@ -1,5 +1,9 @@
 /* ===== App: estado global compartido y utilidades de página ===== */
 
+const MENU_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>';
+const CLOSE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+const IMG_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+
 const App = {
   state: {
     destination: '',
@@ -39,14 +43,14 @@ const App = {
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
       const open = nav.classList.toggle('open');
-      toggle.textContent = open ? '✕' : '☰';
+      toggle.innerHTML = open ? CLOSE_SVG : MENU_SVG;
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
     });
     document.addEventListener('click', (e) => {
       if (nav.contains(e.target) || toggle.contains(e.target)) return;
       nav.classList.remove('open');
-      toggle.textContent = '☰';
+      toggle.innerHTML = MENU_SVG;
       toggle.setAttribute('aria-expanded', 'false');
     });
   },
@@ -63,7 +67,8 @@ const App = {
   },
 
   launchEditorFromTemplate(template) {
-    this.launchEditor({ template, cards: [], projectName: 'Proyecto nuevo' });
+    const sampleCards = Generator.SAMPLE_CARDS[template] || [];
+    this.launchEditor({ template, cards: sampleCards, projectName: 'Proyecto nuevo' });
   },
 
   async setupTemplateSelect(selectId) {
@@ -86,19 +91,37 @@ const App = {
     div.className = 'project-card';
     const date = project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '';
     div.innerHTML = `
-      <div class="project-thumb">🖼</div>
+      <div class="project-thumb">${IMG_SVG}</div>
       <div class="project-body">
         <div class="project-name">${esc(project.name)}</div>
         <div class="project-meta">${esc(project.destination || '—')}<br>${esc(date)} · ${project.cards_count || 0} tarjetas</div>
       </div>
       <div class="project-actions">
         <button class="btn btn-primary btn-sm act-open">Editar</button>
+        <button class="btn btn-ghost btn-sm act-download">Descargar</button>
         <button class="btn btn-ghost btn-sm act-del">Eliminar</button>
       </div>
     `;
     div.querySelector('.act-open').addEventListener('click', (e) => {
       e.stopPropagation();
       location.href = '/editor?project=' + encodeURIComponent(project.id);
+    });
+    div.querySelector('.act-download').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        const blob = await API.projects.download(project.id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (project.name || 'proyecto') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        App.toast('Proyecto descargado.', 'success');
+      } catch (err) {
+        App.toast(err.message || 'No se pudo descargar.', 'error');
+      }
     });
     div.querySelector('.act-del').addEventListener('click', async (e) => {
       e.stopPropagation();

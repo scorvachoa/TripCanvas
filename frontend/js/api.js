@@ -22,14 +22,21 @@ const API = {
   del(path) { return this.request('DELETE', path); },
 
   async getBlob(path, body) {
-    const res = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+    opts.body = JSON.stringify(body);
+    const res = await fetch(path, opts);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error((data && data.detail) || 'Error al exportar.');
+    }
+    return res.blob();
+  },
+
+  async fetchBlob(path) {
+    const res = await fetch(path);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data && data.detail) || 'Error al descargar.');
     }
     return res.blob();
   },
@@ -58,6 +65,15 @@ const API = {
     create: (payload) => API.post('/api/projects', payload),
     update: (id, payload) => API.put('/api/projects/' + id, payload),
     del: (id) => API.del('/api/projects/' + id),
+    download: (id) => API.fetchBlob('/api/projects/' + id + '/download'),
+    upload: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/projects/upload', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || 'Error al subir proyecto.');
+      return data;
+    },
   },
   export: {
     one: (payload) => API.getBlob('/api/export', payload),

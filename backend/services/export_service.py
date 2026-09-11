@@ -159,23 +159,23 @@ def _inject_format_class(card_html: str, cls: str) -> str:
 def _render_facts_list(facts) -> str:
     items = []
     for i, fact in enumerate(facts or []):
-        items.append(f"<li><span class='fact-num'>{i + 1}</span><span>{_esc(fact)}</span></li>")
+        items.append(f"<li><span class='fact-num'>{i + 1}</span><span data-field='FACT_{i}'>{_esc(fact)}</span></li>")
     return "\n".join(items)
 
 
 def _render_facts_label_value(facts) -> str:
     rows = []
-    for fact in facts or []:
+    for i, fact in enumerate(facts or []):
         if isinstance(fact, dict):
             label = fact.get("label", "")
             value = fact.get("value", "")
             rows.append(
-                f"<li class='fv-row'><span class='fv-label'>{_esc(label)}</span>"
-                f"<span class='fv-value'>{_esc(value)}</span></li>"
+                f"<li class='fv-row'><span class='fv-label' data-field='FACT_LABEL_{i}'>{_esc(label)}</span>"
+                f"<span class='fv-value' data-field='FACT_{i}'>{_esc(value)}</span></li>"
             )
         else:
             rows.append(
-                f"<li class='fv-row'><span class='fv-value'>{_esc(fact)}</span></li>"
+                f"<li class='fv-row'><span class='fv-value' data-field='FACT_{i}'>{_esc(fact)}</span></li>"
             )
     return "\n".join(rows)
 
@@ -187,20 +187,20 @@ def _render_options(options) -> str:
         letter = letters[i] if i < len(letters) else str(i + 1)
         items.append(
             f"<div class='quiz-option'><span class='quiz-letter'>{letter}</span>"
-            f"<span>{_esc(opt)}</span></div>"
+            f"<span data-field='OPTION_{i}'>{_esc(opt)}</span></div>"
         )
     return "\n".join(items)
 
 
 def _render_items(items) -> str:
     rows = []
-    for item in items or []:
+    for i, item in enumerate(items or []):
         if isinstance(item, dict):
             label = item.get("label", "")
             value = item.get("value", "")
             rows.append(
-                f"<div class='cmp-row'><span class='cmp-label'>{_esc(label)}</span>"
-                f"<span class='cmp-value'>{_esc(value)}</span></div>"
+                f"<div class='cmp-row'><span class='cmp-label' data-field='ITEM_LABEL_{i}'>{_esc(label)}</span>"
+                f"<span class='cmp-value' data-field='ITEM_{i}'>{_esc(value)}</span></div>"
             )
     return "\n".join(rows)
 
@@ -266,8 +266,20 @@ def render_card_html(
     tokens = _tokens(card, destination, design)
 
     card_html = template.html
+
+    _EDITABLE_FIELDS = {
+        "TITLE", "BODY", "QUESTION", "ANSWER", "MYTH", "REALITY",
+        "DESTINATION", "SOURCE", "LOCATION", "ALTITUDE", "NUMBER", "DATE",
+    }
+
     for key, value in tokens.items():
-        card_html = card_html.replace("{{" + key + "}}", value)
+        if key in _EDITABLE_FIELDS and value:
+            card_html = card_html.replace(
+                "{{" + key + "}}",
+                f'<span data-field="{key}">{value}</span>',
+            )
+        else:
+            card_html = card_html.replace("{{" + key + "}}", value)
 
     # Limpia cualquier token no reemplazado para evitar errores.
     card_html = re.sub(r"\{\{[A-Z_]+\}\}", "", card_html)

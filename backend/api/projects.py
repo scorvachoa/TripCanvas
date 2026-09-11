@@ -1,10 +1,12 @@
+import json
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import Response
 
 from models.content import Card
 from models.project import Project, ProjectCreate, ProjectUpdate
-from services import supabase_storage as storage
+from services import local_storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["projects"])
@@ -34,71 +36,60 @@ def get_template(template_id: str) -> dict:
     }
 
 
-def card_to_dict(card: Card) -> dict:
-    """Convierte un Card en el dict que se almacena en JSON."""
-    return card.model_dump()
-
-
-def dict_to_project(data: dict) -> Project:
-    return Project(
-        id=data["id"],
-        name=data.get("name", ""),
-        destination=data.get("destination", ""),
-        template=data.get("template", "dato-curioso"),
-        format=data.get("format", "instagram_portrait"),
-        cards=[Card(**c) for c in data.get("cards", [])],
-        created_at=data.get("created_at", ""),
-        updated_at=data.get("updated_at", ""),
-    )
-
-
-def _get_or_404(project_id: str) -> dict:
-    data = storage.get_project(project_id)
-    if data is None:
-        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-    return data
-
-
 @router.post("/projects", status_code=201)
 def create_project(payload: ProjectCreate) -> Project:
-    cards = [card_to_dict(card) for card in payload.cards]
-    project = storage.create_project(
-        name=payload.name,
-        destination=payload.destination,
-        template=payload.template,
-        format_=payload.format,
-        cards=cards,
-    )
-    return dict_to_project(project)
+    return local_storage.create_project(payload)
 
 
 @router.get("/projects")
 def list_projects() -> list[dict]:
-    return storage.list_projects()
+    return local_storage.list_projects()
 
 
 @router.get("/projects/{project_id}")
 def get_project(project_id: str) -> Project:
-    return dict_to_project(_get_or_404(project_id))
+    project = local_storage.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return project
 
 
 @router.put("/projects/{project_id}")
 def update_project(project_id: str, payload: ProjectUpdate) -> Project:
-    cards = [card_to_dict(card) for card in payload.cards] if payload.cards is not None else None
-    project = storage.update_project(
-        project_id,
-        name=payload.name,
-        destination=payload.destination,
-        template=payload.template,
-        format_=payload.format,
-        cards=cards,
-    )
-    if project is None:
+    project = local_storage.update_project(project_id, payload)
+    if not project:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-    return dict_to_project(project)
+    return project
 
 
 @router.delete("/projects/{project_id}", status_code=204)
 def delete_project(project_id: str) -> None:
-    if not storage.delete_project(project_id):
+    if not local_storage.delete_project(project_id):
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+
+@router.get("/projects/{project_id}/download")
+def download_project(project_id: str) -> Response:
+    data = local_storage.export_project(project_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    filename = f"{data.get('name', project_id)}.json"
+    return Response(
+        content=json.dumps(data, ensure_ascii=False, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/projects/upload", status_code=201)
+async def upload_project(file: UploadFile = File(...)) -> Project:
+    if not file.filename or not file.filename.endswith(".json"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un .json")
+    try:
+        content = await file.read()
+        data = json.loads(content.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="Archivo JSON inválido")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Formato de proyecto inválido")
+    return local_storage.import_project(data)

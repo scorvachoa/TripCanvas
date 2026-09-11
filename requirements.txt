@@ -5,5 +5,4 @@ python-dotenv==1.0.1
 pydantic==2.10.4
 python-multipart==0.0.20
 playwright==1.49.1
-psycopg[binary]==3.3.4
 tinify==1.7.2

@@ -9,9 +9,26 @@ const Editor = {
     ['e-myth', 'myth'],
     ['e-reality', 'reality'],
     ['e-location', 'location'],
-    ['e-altitude', 'altitude'],
     ['e-source', 'source'],
   ],
+
+  TEMPLATE_FIELDS: {
+    dato_curioso:       ['title', 'body'],
+    quiz:               ['question', 'answer'],
+    mito_realidad:      ['title', 'myth', 'reality'],
+    cinco_datos:        ['title', 'facts'],
+    consejos:           ['title', 'facts'],
+    sabias_que:         ['question', 'answer'],
+    comparativa:        ['title', 'body'],
+    historia:           ['title', 'body'],
+    arquitectura:       ['title', 'body', 'facts'],
+    como_llegar:        ['title', 'facts'],
+    cultura:            ['title', 'body', 'facts'],
+    guia_rapida:        ['title', 'facts'],
+    informacion_general:['title', 'body', 'facts'],
+    mejor_epoca:        ['title', 'facts'],
+    naturaleza:         ['title', 'body', 'facts'],
+  },
 
   init() {
     for (const [elId] of this.FIELD_MAP) {
@@ -57,6 +74,8 @@ const Editor = {
     document.getElementById('btn-prev').addEventListener('click', () => this.nav(-1));
     document.getElementById('btn-next').addEventListener('click', () => this.nav(1));
     document.getElementById('btn-save').addEventListener('click', () => this.askSave());
+    document.getElementById('btn-download-project').addEventListener('click', () => this.downloadProject());
+    document.getElementById('btn-upload-project').addEventListener('change', (e) => this.uploadProject(e));
     document.getElementById('btn-back').addEventListener('click', () => {
       if (window.history.length > 1) {
         window.history.back();
@@ -64,6 +83,115 @@ const Editor = {
         location.href = '/';
       }
     });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'tc-field-click') {
+        this.openFieldEditor(e.data.field, e.data.value);
+      }
+    });
+
+    document.getElementById('edit-field-save').addEventListener('click', () => this.saveFieldEdit());
+    document.getElementById('edit-field-cancel').addEventListener('click', () => this.closeFieldEditor());
+    document.getElementById('edit-field-close').addEventListener('click', () => this.closeFieldEditor());
+    document.getElementById('edit-field-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.saveFieldEdit();
+      } else if (e.key === 'Escape') {
+        this.closeFieldEditor();
+      }
+    });
+  },
+
+  _editingField: null,
+
+  FIELD_LABELS: {
+    TITLE: 'Título', BODY: 'Descripción', QUESTION: 'Pregunta',
+    ANSWER: 'Respuesta', MYTH: 'Mito', REALITY: 'Realidad',
+    DESTINATION: 'Destino', SOURCE: 'Fuente', LOCATION: 'Ubicación',
+    ALTITUDE: 'Altitud', NUMBER: 'Número', DATE: 'Fecha',
+  },
+
+  FIELD_TO_CARD: {
+    TITLE: 'title', BODY: 'body', QUESTION: 'question',
+    ANSWER: 'answer', MYTH: 'myth', REALITY: 'reality',
+    DESTINATION: 'destination', SOURCE: 'source', LOCATION: 'location',
+    ALTITUDE: 'altitude', NUMBER: 'number', DATE: null,
+  },
+
+  openFieldEditor(field, value) {
+    this._editingField = field;
+    const indexedMatch = field.match(/^(FACT|FACT_LABEL|OPTION|ITEM|ITEM_LABEL)_(\d+)$/);
+    let label;
+    if (indexedMatch) {
+      const type = indexedMatch[1];
+      const idx = parseInt(indexedMatch[2], 10) + 1;
+      const typeLabels = { FACT: 'Dato', FACT_LABEL: 'Etiqueta', OPTION: 'Opción', ITEM: 'Elemento', ITEM_LABEL: 'Etiqueta' };
+      label = `${typeLabels[type]} ${idx}`;
+    } else {
+      label = this.FIELD_LABELS[field] || field;
+    }
+    document.getElementById('edit-field-title').textContent = 'Editar ' + label;
+    const input = document.getElementById('edit-field-input');
+    input.value = value;
+    document.getElementById('edit-field-overlay').classList.remove('hidden');
+    input.focus();
+    input.select();
+  },
+
+  closeFieldEditor() {
+    document.getElementById('edit-field-overlay').classList.add('hidden');
+    this._editingField = null;
+  },
+
+  saveFieldEdit() {
+    const field = this._editingField;
+    if (!field) return;
+    const newValue = document.getElementById('edit-field-input').value;
+    this.closeFieldEditor();
+
+    const card = App.state.cards[App.state.currentIndex];
+    if (!card) return;
+
+    const indexedMatch = field.match(/^(FACT|FACT_LABEL|OPTION|ITEM|ITEM_LABEL)_(\d+)$/);
+    if (indexedMatch) {
+      const type = indexedMatch[1];
+      const idx = parseInt(indexedMatch[2], 10);
+      if (type === 'FACT' && card.facts) {
+        if (typeof card.facts[idx] === 'object') card.facts[idx].value = newValue;
+        else card.facts[idx] = newValue;
+      } else if (type === 'FACT_LABEL' && card.facts && typeof card.facts[idx] === 'object') {
+        card.facts[idx].label = newValue;
+      } else if (type === 'OPTION' && card.options) {
+        card.options[idx] = newValue;
+      } else if (type === 'ITEM' && card.extra && card.extra.items && card.extra.items[idx]) {
+        card.extra.items[idx].value = newValue;
+      } else if (type === 'ITEM_LABEL' && card.extra && card.extra.items && card.extra.items[idx]) {
+        card.extra.items[idx].label = newValue;
+      }
+    } else {
+      const cardKey = this.FIELD_TO_CARD[field];
+      if (cardKey) {
+        card[cardKey] = newValue;
+      } else if (field === 'DATE') {
+        if (!card.extra) card.extra = {};
+        card.extra.fecha = newValue;
+      }
+
+      if (cardKey === 'destination') {
+        App.state.destination = newValue;
+        document.getElementById('e-destination').value = newValue;
+      }
+
+      const panelField = document.querySelector(`[data-editor-field="${cardKey}"]`);
+      if (panelField) {
+        const input = panelField.querySelector('textarea, input');
+        if (input) input.value = newValue;
+      }
+    }
+
+    this.markDirty();
+    this.rerender();
   },
 
   async syncTemplateSelect() {
@@ -73,6 +201,15 @@ const Editor = {
       await App.setupTemplateSelect('d-template');
     }
     select.value = App.state.template;
+    this.updateFieldVisibility();
+  },
+
+  updateFieldVisibility() {
+    const fields = this.TEMPLATE_FIELDS[App.state.template] || [];
+    document.querySelectorAll('[data-editor-field]').forEach((el) => {
+      const field = el.getAttribute('data-editor-field');
+      el.style.display = fields.includes(field) ? '' : 'none';
+    });
   },
 
   onFieldInput(e) {
@@ -122,6 +259,11 @@ const Editor = {
     if (id === 'd-text-scale') {
       const v = Math.round((parseFloat(document.getElementById('d-text-scale').value) || 1) * 100);
       document.getElementById('d-text-scale-val').textContent = v + '%';
+    }
+    if (id === 'd-bg' || id === 'd-text' || id === 'd-accent') {
+      const hex = document.getElementById(id).value;
+      const circle = document.getElementById(id + '-circle');
+      if (circle) circle.style.background = hex;
     }
     this.markDirty();
     this.rerender();
@@ -182,6 +324,7 @@ const Editor = {
     document.getElementById('d-format').value = App.state.format;
     const card = App.state.cards[App.state.currentIndex];
     this.loadCardIntoPanel(card);
+    this.updateFieldVisibility();
     await renderPreview();
   },
 
@@ -293,5 +436,41 @@ const Editor = {
     }
 
     await this.enter();
+  },
+
+  async downloadProject() {
+    const projectId = App.state.projectId;
+    if (!projectId) {
+      App.toast('Guarda el proyecto primero para poder descargarlo.', 'info');
+      return;
+    }
+    try {
+      const blob = await API.projects.download(projectId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (App.state.projectName || 'proyecto') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      App.toast('Proyecto descargado.', 'success');
+    } catch (err) {
+      App.toast(err.message || 'No se pudo descargar.', 'error');
+    }
+  },
+
+  async uploadProject(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      App.toast('Subiendo proyecto...');
+      const project = await API.projects.upload(file);
+      App.toast('Proyecto importado. Abriendo...', 'success');
+      location.href = '/editor?project=' + project.id;
+    } catch (err) {
+      App.toast(err.message || 'No se pudo subir el proyecto.', 'error');
+    }
+    e.target.value = '';
   },
 };

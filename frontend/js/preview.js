@@ -64,8 +64,10 @@ function fitPreview() {
   const stage = document.getElementById('preview-stage');
   const { w, h } = currentFormat();
   const availW = stage.clientWidth - 48;
-  const availH = Math.max(stage.clientHeight - 48, 300);
-  const scale = Math.min(availW / w, availH / h, 1);
+  const scale = Math.min(availW / w, 1);
+  const scaledH = h * scale;
+  const minH = Math.max(scaledH + 48, 300);
+  stage.style.minHeight = minH + 'px';
   const el = ensureCardEl();
   el.style.width = (w * scale) + 'px';
   el.style.height = (h * scale) + 'px';
@@ -117,4 +119,34 @@ async function renderPreview() {
 
   ensureFrameEl().srcdoc = html;
   fitPreview();
+
+  const frame = document.getElementById('preview-frame');
+  frame.onload = () => {
+    try {
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      const script = doc.createElement('script');
+      script.textContent = `
+        (function() {
+          var s = document.createElement('style');
+          s.textContent = '[data-field]{cursor:pointer;transition:outline .15s}[data-field]:hover{outline:2px dashed rgba(244,185,66,0.6);outline-offset:2px;border-radius:3px}';
+          document.head.appendChild(s);
+          document.addEventListener('click', function(e) {
+            var el = e.target.closest('[data-field]');
+            if (el) {
+              e.preventDefault();
+              e.stopPropagation();
+              parent.postMessage({
+                type: 'tc-field-click',
+                field: el.getAttribute('data-field'),
+                value: el.textContent
+              }, '*');
+            }
+          });
+        })();
+      `;
+      doc.body.appendChild(script);
+    } catch (err) {
+      console.warn('No se pudo inyectar editor en iframe:', err);
+    }
+  };
 }

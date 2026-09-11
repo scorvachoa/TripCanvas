@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 
 from api import export, generation, projects
 from config import CORS_ORIGINS, FRONTEND_DIR
-from services import supabase_storage
 from services.export_service import _close_browser
 
 logger = logging.getLogger(__name__)
@@ -21,17 +20,10 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        supabase_storage.init_schema()
-    except Exception as exc:  # noqa: BLE001
-        logging.getLogger("uvicorn.error").error(
-            "No se pudo conectar a PostgreSQL (Supabase). Revisa la variable "
-            "DATABASE_URL en .env. %s", exc
-        )
-        raise
+    from services.local_storage import PROJECTS_DIR
+    PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
     yield
     await _close_browser()
-    supabase_storage.close_pool()
 
 
 app = FastAPI(title="TripCanvas API", version="0.1.0", lifespan=lifespan)
@@ -51,30 +43,16 @@ app.include_router(export.router)
 
 @app.get("/api/health")
 def health() -> JSONResponse:
-    try:
-        supabase_storage.ping()
-        return JSONResponse({"status": "ok", "database": "ok"})
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Health check: BD no disponible: %s", exc)
-        return JSONResponse(
-            status_code=503,
-            content={"status": "degraded", "database": "error"},
-        )
+    return JSONResponse({"status": "ok"})
 
 
 @app.get("/healthz")
 def healthz() -> JSONResponse:
-    """Health check ligero para el orquestador (Render, etc.).
-
-    No consulta la BD: si Supabase tarda en responder, este endpoint sigue
-    devolviendo 200 y el servicio no se reinicia en bucle.
-    """
     return JSONResponse({"status": "ok"})
 
 
 _PAGE_FILES = {
     "/crear": "crear.html",
-    "/proyectos": "proyectos.html",
     "/plantillas": "plantillas.html",
     "/editor": "editor.html",
 }

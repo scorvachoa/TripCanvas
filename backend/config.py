@@ -45,9 +45,6 @@ DATA_DIR = BASE_DIR / "data"
 TEMPLATES_DIR = BASE_DIR / "templates"
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-# PostgreSQL (Supabase). El backend guarda los proyectos aquí.
-DATABASE_URL = _get("DATABASE_URL")
-
 CORS_ORIGINS = [
     origin.strip()
     for origin in _get("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",")

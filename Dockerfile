@@ -22,6 +22,8 @@ COPY frontend ./frontend
 COPY templates ./templates
 COPY data ./data
 
+RUN mkdir -p data/projects
+
 EXPOSE 8000
 
 # Render inyecta $PORT; se usa como respaldo si no está definido.

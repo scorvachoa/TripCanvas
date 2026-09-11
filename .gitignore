@@ -19,6 +19,10 @@ output/
 _render.html
 _out.json
 
+# Proyectos locales (generados en runtime)
+data/projects/
+!data/projects/.gitkeep
+
 # IDE
 .vscode/
 .idea/
