@@ -16,7 +16,6 @@ RUN playwright install --with-deps chromium
 COPY backend/ backend/
 COPY frontend/ frontend/
 COPY templates/ templates/
-COPY data/ data/
 
 RUN mkdir -p data/projects
 
