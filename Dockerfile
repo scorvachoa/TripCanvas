@@ -1,30 +1,27 @@
-# bookworm (Debian 12): soportado por Playwright 1.49. La variante slim actual
-# usa Debian trixie, donde `playwright install --with-deps` falla.
 FROM python:3.12-slim-bookworm
-
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
-
-# curl: la app llama a la API de Gemini vía subprocess (curl).
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Playwright instala Chromium y sus dependencias de sistema (--with-deps).
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && python -m playwright install --with-deps chromium \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libdbus-1-3 libxkbcommon0 libatspi2.0-0 libxcomposite1 libxdamage1 \
+    libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend ./backend
-COPY frontend ./frontend
-COPY templates ./templates
-COPY data ./data
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN playwright install --with-deps chromium
+
+COPY backend/ backend/
+COPY frontend/ frontend/
+COPY templates/ templates/
+COPY data/ data/
 
 RUN mkdir -p data/projects
 
-EXPOSE 8000
+ENV PYTHONPATH=backend
 
-# Render inyecta $PORT; se usa como respaldo si no está definido.
-CMD ["sh", "-c", "uvicorn main:app --app-dir backend --host 0.0.0.0 --port ${PORT:-8000}"]
+EXPOSE 8080
+
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
