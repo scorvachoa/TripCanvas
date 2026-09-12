@@ -97,6 +97,7 @@ async function renderPreview() {
     return;
   }
 
+  const imageEnabled = document.getElementById('d-image-enabled');
   const payload = {
     ...card,
     destination: state.destination,
@@ -104,6 +105,9 @@ async function renderPreview() {
     format_id: state.format,
     design: buildDesignFromControls(),
   };
+  if (imageEnabled && !imageEnabled.checked) {
+    payload.image = '';
+  }
   const key = JSON.stringify(payload);
   if (key === _previewKey) return;
   _previewKey = key;

@@ -75,12 +75,8 @@ const Editor = {
     const imageFields = document.getElementById('d-image-fields');
     imageEnabled.addEventListener('change', async () => {
       imageFields.style.display = imageEnabled.checked ? '' : 'none';
-      if (!imageEnabled.checked) {
-        App.state.cards[App.state.currentIndex].image = '';
-        document.getElementById('d-image').value = '';
-        this.markDirty();
-        await renderPreview();
-      }
+      this.markDirty();
+      await renderPreview();
     });
 
     document.getElementById('btn-prev').addEventListener('click', () => this.nav(-1));
