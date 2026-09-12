@@ -1,10 +1,6 @@
-import os
-import sys
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from services.validation_service import (  # noqa: E402
+from services.validation_service import (
     CATEGORY_REQUIRED_FIELDS,
     extract_json,
     validate_response,

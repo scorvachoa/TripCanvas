@@ -1,15 +1,11 @@
-import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from models.content import Card  # noqa: E402
-from services import export_service  # noqa: E402
-from services.export_service import (  # noqa: E402
+from models.content import Card
+from services import export_service
+from services.export_service import (
     _maybe_compress,
     render_card_html,
 )

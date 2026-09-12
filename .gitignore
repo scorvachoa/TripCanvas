@@ -26,3 +26,12 @@ data/projects/
 # IDE
 .vscode/
 .idea/
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+
+# Python
+*.egg-info/
+dist/
+build/

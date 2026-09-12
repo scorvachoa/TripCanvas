@@ -1,11 +1,7 @@
-import os
-import sys
 import time
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from services import rate_limit  # noqa: E402
+from services import rate_limit
 
 
 class _FakeClient:

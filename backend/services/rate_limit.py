@@ -21,6 +21,9 @@ def _check_rate_limit(request: Request, max_requests: int = RATE_LIMIT_MAX, wind
     window = _hits[client]
     while window and now - window[0] > window_seconds:
         window.pop(0)
+    if not window:
+        _hits.pop(client, None)
+        window = _hits[client]
     if len(window) >= max_requests:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

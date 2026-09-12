@@ -18,10 +18,13 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyflakes
+          pip install -r requirements.txt pyflakes mypy
 
       - name: Verificar sintaxis (pyflakes)
         run: pyflakes backend tests
+
+      - name: Type checking (mypy)
+        run: mypy backend --ignore-missing-imports --no-error-summary
 
       - name: Unit tests
         run: python -m unittest discover -s tests

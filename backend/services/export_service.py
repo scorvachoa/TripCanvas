@@ -1,13 +1,20 @@
+"""Orquestación de exportación de tarjetas a PNG y ZIP.
+
+Coordina el renderizado HTML, la captura con Playwright, la compresión
+con Tinify y el empaquetado ZIP. Los módulos auxiliares (image_embedder,
+browser_manager) manejan las responsabilidades individuales.
+"""
+
 import html as html_module
 import logging
 import re
-import urllib.request
 import zipfile
-from functools import lru_cache
 from pathlib import Path
 
 from config import OUTPUT_DIR
-from models.content import Card
+from models.content import Card, FactItem
+from services.browser_manager import capture_png
+from services.image_embedder import embed_image, inject_card_photo, inject_format_class
 from services.template_service import format_size, load_template
 from services.tinify_service import compress_image
 
@@ -70,92 +77,6 @@ def _css(value) -> str:
     return raw
 
 
-def _image_url(value) -> str:
-    """Sanitiza una URL de imagen para usarla dentro de url('...').
-
-    Reemplaza comillas y backslashes para que no rompa el atributo style ni la
-    cadena CSS, y escapa el resto de caracteres especiales de HTML.
-    """
-    url = str(value or "").strip()
-    url = url.replace("'", "%27").replace('"', "%22").replace("\\", "/")
-    return html_module.escape(url, quote=False)
-
-
-@lru_cache(maxsize=64)
-def _fetch_embed(url: str) -> str:
-    """Descarga la imagen y la devuelve como data URL base64 (cacheado).
-
-    La caché evita volver a descargar la misma imagen en cada render del
-    preview/export. Si no se puede descargar, devuelve la URL original.
-    """
-    try:
-        import base64
-        import mimetypes
-
-        req = urllib.request.Request(url, headers={
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) "
-                "Gecko/20100101 Firefox/130.0"
-            ),
-            "Accept": "image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5",
-        })
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = resp.read()
-            ctype = resp.headers.get("Content-Type", "")
-        if len(data) > 8 * 1024 * 1024:
-            logger.warning("Imagen demasiado grande para incrustar (%d bytes); usando URL", len(data))
-            return url
-        if not ctype or ctype.startswith("text/"):
-            ctype = mimetypes.guess_type(url)[0] or "image/png"
-        return f"data:{ctype};base64,{base64.b64encode(data).decode('ascii')}"
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("No se pudo incrustar la imagen (%s); usando URL", exc)
-        return url
-
-
-def _embed_image(value) -> str:
-    """Devuelve la imagen como data URL base64 si es posible.
-
-    Al incrustar la imagen en el HTML de exportación el PNG ya no depende de que
-    el servidor (Playwright) pueda alcanzar la URL original (403 externos,
-    hotlink, firewalls, etc.) que sí carga el navegador del usuario en la
-    preview. Si no se puede descargar, devuelve la URL original.
-    """
-    url = str(value or "").strip()
-    if not url or url.startswith("data:"):
-        return url
-    # Solo http/https: evitar SSRF/lectura de archivos locales vía file://, etc.
-    if not url.lower().startswith(("http://", "https://")):
-        logger.warning("URL de imagen con esquema no permitido; se omite el incrustado")
-        return url
-    return _fetch_embed(url)
-
-
-def _inject_card_photo(card_html: str, image: str) -> str:
-    """Añade la foto como fondo de .travel-card para cualquier plantilla."""
-    bg_style = (
-        "background-image:linear-gradient(var(--tc-overlay),var(--tc-overlay)),"
-        f"url('{_image_url(image)}');"
-        "background-size:cover;background-position:center;"
-    )
-    return re.sub(
-        r'<div class="travel-card([^"]*)"([^>]*)>',
-        lambda m: f'<div class="travel-card{m.group(1)} tc-has-photo"{m.group(2)} style="{bg_style}">',
-        card_html,
-        count=1,
-    )
-
-
-def _inject_format_class(card_html: str, cls: str) -> str:
-    """Añade una clase modificadora (ej. tc-square) al .travel-card."""
-    return re.sub(
-        r'<div class="travel-card([^"]*)"([^>]*)>',
-        lambda m: f'<div class="travel-card{m.group(1)} {cls}"{m.group(2)}>',
-        card_html,
-        count=1,
-    )
-
-
 def _render_facts_list(facts) -> str:
     items = []
     for i, fact in enumerate(facts or []):
@@ -166,12 +87,10 @@ def _render_facts_list(facts) -> str:
 def _render_facts_label_value(facts) -> str:
     rows = []
     for i, fact in enumerate(facts or []):
-        if isinstance(fact, dict):
-            label = fact.get("label", "")
-            value = fact.get("value", "")
+        if isinstance(fact, FactItem):
             rows.append(
-                f"<li class='fv-row'><span class='fv-label' data-field='FACT_LABEL_{i}'>{_esc(label)}</span>"
-                f"<span class='fv-value' data-field='FACT_{i}'>{_esc(value)}</span></li>"
+                f"<li class='fv-row'><span class='fv-label' data-field='FACT_LABEL_{i}'>{_esc(fact.label)}</span>"
+                f"<span class='fv-value' data-field='FACT_{i}'>{_esc(fact.value)}</span></li>"
             )
         else:
             rows.append(
@@ -286,13 +205,13 @@ def render_card_html(
 
     # Foto como fondo de la tarjeta en cualquier plantilla. Se incrusta la
     # imagen en base64 para que el PNG sea fiel a lo que ve el usuario.
-    image_src = _embed_image(card.image) if card.image else None
+    image_src = embed_image(card.image) if card.image else None
     if image_src:
-        card_html = _inject_card_photo(card_html, image_src)
+        card_html = inject_card_photo(card_html, image_src)
 
     # Formato corto (square): clase para compactar el diseño.
     if height <= 1100:
-        card_html = _inject_format_class(card_html, "tc-square")
+        card_html = inject_format_class(card_html, "tc-square")
 
     text_scale = round(
         design.get("textScale", 1) * (0.82 if height <= 1100 else 1), 4
@@ -366,7 +285,7 @@ def render_card_html(
 
 
 def _maybe_compress(png_path: Path, compress: bool) -> None:
-    """Comprime el PNG en sitio si `compress` está activo y Tinify lo reduce."""
+    """Comprime el PNG en sitio si ``compress`` está activo y Tinify lo reduce."""
     if not compress:
         return
     try:
@@ -391,75 +310,9 @@ async def export_card_png(
     html_content = render_card_html(
         card, template_id, destination=destination, format_id=format_id, design=design
     )
-    path = await _capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
+    path = await capture_png(html_content, format_id, suffix=card.number or 1, output_dir=output_dir)
     _maybe_compress(path, compress)
     return path
-
-
-async def _get_browser():
-    """Devuelve un navegador Chromium compartido, lanzándolo si es necesario.
-
-    Lanzar Chromium cuesta ~1-2s; al reutilizar la instancia entre peticiones
-    las exportaciones sucesivas son mucho más rápidas. `asyncio.Lock` evita que
-    dos peticiones concurrentes lancen dos navegadores.
-    """
-    global _playwright, _browser, _browser_lock
-    if _browser_lock is None:
-        import asyncio
-
-        _browser_lock = asyncio.Lock()
-    async with _browser_lock:
-        if _browser is not None and _browser.is_connected():
-            return _browser
-        from playwright.async_api import async_playwright
-
-        if _playwright is None:
-            _playwright = await async_playwright().start()
-        # --no-sandbox es necesario al correr como root (Docker/Render);
-        # no afecta al desarrollo local.
-        _browser = await _playwright.chromium.launch(args=["--no-sandbox"])
-        return _browser
-
-
-async def _close_browser() -> None:
-    """Cierra el navegador y el runtime de Playwright (llamar al apagar la app)."""
-    global _playwright, _browser
-    if _browser is not None:
-        try:
-            await _browser.close()
-        except Exception:  # noqa: BLE001
-            pass
-        _browser = None
-    if _playwright is not None:
-        try:
-            await _playwright.stop()
-        except Exception:  # noqa: BLE001
-            pass
-        _playwright = None
-
-
-_playwright = None
-_browser = None
-_browser_lock = None
-
-
-async def _capture_png(html_content: str, format_id: str, suffix=1, output_dir: Path | None = None) -> Path:
-    out = output_dir or OUTPUT_DIR
-    out.mkdir(parents=True, exist_ok=True)
-    width, height = format_size(format_id)
-
-    file_path = out / f"card_{suffix:02d}.png"
-
-    browser = await _get_browser()
-    page = await browser.new_page(viewport={"width": width, "height": height})
-    try:
-        await page.set_content(html_content, wait_until="networkidle")
-        element = page.locator(".travel-card")
-        await element.screenshot(path=str(file_path))
-    finally:
-        await page.close()
-
-    return file_path
 
 
 async def export_cards_zip(
@@ -472,6 +325,8 @@ async def export_cards_zip(
     compress: bool = False,
 ) -> Path:
     """Genera un ZIP con las tarjetas en PNG y un copy.txt con los textos."""
+    from services.browser_manager import get_browser
+
     out = output_dir or OUTPUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     width, height = format_size(format_id)
@@ -480,7 +335,7 @@ async def export_cards_zip(
 
     pages: list[tuple[Path, Card]] = []
 
-    browser = await _get_browser()
+    browser = await get_browser()
     for i, card in enumerate(cards, start=1):
         html_content = render_card_html(
             card,

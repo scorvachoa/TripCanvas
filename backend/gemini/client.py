@@ -1,16 +1,19 @@
+"""Cliente HTTP para la API de Google Gemini.
+
+Usa httpx para realizar las peticiones. Incluye rotación automática de API
+keys ante errores 429 (quota/rate limit).
+"""
+
 import json
 import logging
-import shutil
-import subprocess
-import tempfile
-from functools import lru_cache
-from pathlib import Path
+
+import httpx
 
 from config import GEMINI_API_KEYS, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
 
-CURL_TIMEOUT_SECONDS = 45
+HTTP_TIMEOUT_SECONDS = 45
 
 _RATE_LIMIT_HINTS = ("429", "quota", "rate limit", "resource exhausted")
 
@@ -22,9 +25,8 @@ class RateLimitError(ConnectionError):
 class GeminiClient:
     """Cliente de Gemini con rotación automática de API keys.
 
-    Usa `curl` vía subprocess: en entornos donde las conexiones directas de
-    Python son lentas o están bloqueadas, curl es fiable y rápido. Ante un
-    429 (quota/rate limit) rota a la siguiente clave configurada.
+    Usa httpx para las peticiones HTTP. Ante un 429 (quota/rate limit) rota
+    a la siguiente clave configurada.
     """
 
     def __init__(self, api_keys: list[str] | None = None, model: str = GEMINI_MODEL):
@@ -33,11 +35,10 @@ class GeminiClient:
             raise ValueError(
                 "GEMINI_API_KEY no está configurada. Cópiala en el archivo .env"
             )
-        if shutil.which("curl") is None:
-            raise ValueError("No se encontró `curl` en el sistema.")
         self._keys = keys
         self._key_index = 0
         self._model_name = model
+        self._client = httpx.Client(timeout=HTTP_TIMEOUT_SECONDS)
 
     def _current_key(self) -> str:
         return self._keys[self._key_index % len(self._keys)]
@@ -88,57 +89,36 @@ class GeminiClient:
             },
         }
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            payload_path = Path(tmpdir) / "payload.json"
-            payload_path.write_text(json.dumps(payload), encoding="utf-8")
-            payload_arg = str(payload_path).replace("\\", "/")
+        headers = {
+            "x-goog-api-key": api_key,
+            "Content-Type": "application/json",
+        }
 
-            # Config de curl: la API key va en el archivo de config, no en la CLI.
-            config_path = Path(tmpdir) / "curl.conf"
-            config_path.write_text(
-                "\n".join(
-                    [
-                        f'url = "{self._endpoint()}"',
-                        f'header = "x-goog-api-key: {api_key}"',
-                        'header = "Content-Type: application/json"',
-                        f'data = "@{payload_arg}"',
-                        "--silent",
-                        "--show-error",
-                        f"--max-time {CURL_TIMEOUT_SECONDS}",
-                        "--fail-with-body",
-                    ]
-                ),
-                encoding="utf-8",
-            )
+        try:
+            response = self._client.post(self._endpoint(), json=payload, headers=headers)
+        except httpx.TimeoutException as exc:
+            raise ConnectionError(f"Timeout al consultar Gemini: {exc}") from exc
+        except httpx.RequestError as exc:
+            raise ConnectionError(f"Fallo de red al consultar Gemini: {exc}") from exc
 
-            result = subprocess.run(
-                ["curl", "-K", str(config_path)],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=CURL_TIMEOUT_SECONDS + 15,
-            )
-
-        if result.returncode != 0:
+        if response.status_code != 200:
             detail = ""
-            if result.stdout:
-                try:
-                    body = json.loads(result.stdout)
-                    detail = body.get("error", {}).get("message", "")
-                except (json.JSONDecodeError, AttributeError):
-                    detail = result.stdout.strip()[:300]
-            combined = f"{result.returncode} {result.stderr} {detail}".lower()
+            try:
+                body = response.json()
+                detail = body.get("error", {}).get("message", "")
+            except (json.JSONDecodeError, AttributeError):
+                detail = response.text.strip()[:300]
+            combined = f"{response.status_code} {detail}".lower()
             if any(hint in combined for hint in _RATE_LIMIT_HINTS):
                 raise RateLimitError(f"Quota/rate limit: {detail}".strip())
             raise ConnectionError(
-                f"Fallo de red al consultar Gemini ({result.returncode}). {detail}".strip()
+                f"Fallo de red al consultar Gemini ({response.status_code}). {detail}".strip()
             )
 
         try:
-            data = json.loads(result.stdout)
+            data = response.json()
         except json.JSONDecodeError:
-            logger.error("Respuesta no JSON de Gemini: %s", result.stdout[:500])
+            logger.error("Respuesta no JSON de Gemini: %s", response.text[:500])
             raise ValueError("Gemini devolvió una respuesta inválida.")
 
         if "error" in data:
@@ -158,8 +138,8 @@ class GeminiClient:
 _client: GeminiClient | None = None
 
 
-@lru_cache(maxsize=1)
 def get_client() -> GeminiClient:
+    """Devuelve la instancia singleton del cliente Gemini."""
     global _client
     if _client is None:
         _client = GeminiClient()
@@ -167,6 +147,8 @@ def get_client() -> GeminiClient:
 
 
 def reset_client() -> None:
+    """Reinicia la instancia del cliente (útil para tests)."""
     global _client
+    if _client is not None:
+        _client._client.close()
     _client = None
-    get_client.cache_clear()

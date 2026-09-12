@@ -1,13 +1,9 @@
 import json
-import os
-import sys
 import unittest
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from gemini import content_generator  # noqa: E402
-from gemini.content_generator import (  # noqa: E402
+from gemini import content_generator
+from gemini.content_generator import (
     MAX_IMAGE_GENERATIONS,
     generate_content,
 )

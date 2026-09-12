@@ -1,5 +1,5 @@
+import asyncio
 import logging
-import time
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -14,11 +14,11 @@ router = APIRouter(prefix="/api", tags=["generation"])
 
 
 @router.post("/generate")
-def generate(
+async def generate(
     payload: GenerateRequest,
     _limit: None = Depends(rate_limit()),
 ) -> GenerationResult:
-    tpl = load_template(payload.template_id)
+    tpl = await asyncio.to_thread(load_template, payload.template_id)
     if not tpl:
         raise HTTPException(status_code=404, detail="Plantilla no encontrada")
 
@@ -26,7 +26,8 @@ def generate(
     for _ in range(3):
         attempts += 1
         try:
-            result = generate_content(
+            result = await asyncio.to_thread(
+                generate_content,
                 destination=payload.destination,
                 category=tpl.category,
                 count=payload.count,
@@ -46,7 +47,7 @@ def generate(
             logger.error("Límite de cuota en intento %d/3: %s", attempts, exc)
             if attempts >= 3:
                 break
-            time.sleep(2 * attempts)
+            await asyncio.sleep(2 * attempts)
         except Exception as exc:  # noqa: BLE001
             logger.error("Error en generación Gemini (intento %d/3): %s", attempts, exc)
             break

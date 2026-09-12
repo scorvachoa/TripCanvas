@@ -1,7 +1,25 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Any, Optional, Union
 
-Fact = Union[str, dict]
+
+class FactItem(BaseModel):
+    """Elemento de dato con etiqueta y valor (para comparativas, guías, etc.)."""
+    label: str = ""
+    value: str = ""
+
+
+Fact = Union[str, FactItem]
+
+
+def _coerce_fact(v: Any) -> Fact:
+    """Convierte un valor crudo a un Fact válido (str o FactItem)."""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        return FactItem(**v)
+    if isinstance(v, FactItem):
+        return v
+    return str(v)
 
 
 class Card(BaseModel):
@@ -21,6 +39,13 @@ class Card(BaseModel):
     image_query: str = ""
     number: Optional[int] = None
     extra: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("facts", mode="before")
+    @classmethod
+    def _validate_facts(cls, v: list[Any]) -> list[Fact]:
+        if not isinstance(v, list):
+            return v
+        return [_coerce_fact(item) for item in v]
 
 
 class GenerationResult(BaseModel):

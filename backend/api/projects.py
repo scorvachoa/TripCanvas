@@ -4,7 +4,6 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import Response
 
-from models.content import Card
 from models.project import Project, ProjectCreate, ProjectUpdate
 from services import local_storage
 
@@ -81,13 +80,23 @@ def download_project(project_id: str) -> Response:
     )
 
 
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
 @router.post("/projects/upload", status_code=201)
 async def upload_project(file: UploadFile = File(...)) -> Project:
     if not file.filename or not file.filename.endswith(".json"):
         raise HTTPException(status_code=400, detail="El archivo debe ser un .json")
     try:
-        content = await file.read()
+        content = await file.read(MAX_UPLOAD_SIZE + 1)
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"El archivo excede el tamaño máximo de {MAX_UPLOAD_SIZE // (1024 * 1024)} MB.",
+            )
         data = json.loads(content.decode("utf-8"))
+    except HTTPException:
+        raise
     except (json.JSONDecodeError, UnicodeDecodeError):
         raise HTTPException(status_code=400, detail="Archivo JSON inválido")
     if not isinstance(data, dict):

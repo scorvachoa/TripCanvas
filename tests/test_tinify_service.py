@@ -1,11 +1,7 @@
-import os
-import sys
 import unittest
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from services import tinify_service  # noqa: E402
+from services import tinify_service
 
 
 def _fake_tinify(compressed=b"compressed", error=None):

@@ -1,10 +1,6 @@
-import os
-import sys
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-
-from services.template_service import (  # noqa: E402
+from services.template_service import (
     FORMATS,
     format_size,
     is_safe_template_id,
@@ -35,7 +31,9 @@ class FormatSizeTest(unittest.TestCase):
     def test_formats_dict_has_required(self):
         for fid in ("instagram_portrait", "square", "story"):
             self.assertIn(fid, FORMATS)
-            self.assertEqual(len(FORMATS[fid]["name"]), len(FORMATS[fid]["name"]))
+            self.assertIn("name", FORMATS[fid])
+            self.assertIn("width", FORMATS[fid])
+            self.assertIn("height", FORMATS[fid])
 
 
 class LoadTemplateTest(unittest.TestCase):

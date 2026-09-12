@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from api import export, generation, projects
 from config import CORS_ORIGINS, FRONTEND_DIR
-from services.export_service import _close_browser
+from services.browser_manager import close_browser
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     from services.local_storage import PROJECTS_DIR
     PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
     yield
-    await _close_browser()
+    await close_browser()
 
 
 app = FastAPI(title="TripCanvas API", version="0.1.0", lifespan=lifespan)
