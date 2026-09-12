@@ -71,6 +71,18 @@ const Editor = {
       reader.readAsDataURL(file);
     });
 
+    const imageEnabled = document.getElementById('d-image-enabled');
+    const imageFields = document.getElementById('d-image-fields');
+    imageEnabled.addEventListener('change', async () => {
+      imageFields.style.display = imageEnabled.checked ? '' : 'none';
+      if (!imageEnabled.checked) {
+        App.state.cards[App.state.currentIndex].image = '';
+        document.getElementById('d-image').value = '';
+        this.markDirty();
+        await renderPreview();
+      }
+    });
+
     document.getElementById('btn-prev').addEventListener('click', () => this.nav(-1));
     document.getElementById('btn-next').addEventListener('click', () => this.nav(1));
     document.getElementById('btn-save').addEventListener('click', () => this.askSave());
@@ -294,6 +306,9 @@ const Editor = {
     document.getElementById('e-facts').value = this.factsToLines(card.facts);
     document.getElementById('e-destination').value = App.state.destination;
     document.getElementById('d-image').value = card.image || '';
+    const hasImage = !!card.image;
+    document.getElementById('d-image-enabled').checked = hasImage;
+    document.getElementById('d-image-fields').style.display = hasImage ? '' : 'none';
   },
 
   updateCounter() {
