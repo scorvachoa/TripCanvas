@@ -142,8 +142,9 @@
               <span class="color-label">Texto</span>
             </div>
             <div class="color-item">
-              <div class="color-circle" id="d-accent-circle" style="background:#f4b942">
-                <input type="color" id="d-accent" value="#f4b942">
+              <div class="color-circle" id="d-accent-circle" style="background:#f4b942;cursor:pointer" onclick="AccentPicker.open()">
+                <input type="color" id="d-accent" value="#f4b942" class="file-input-hidden">
+                <input type="hidden" id="d-accent-value" value="#f4b942">
               </div>
               <span class="color-label">Acento</span>
             </div>
@@ -259,12 +260,51 @@
     </div>
   </div>
 
+  <div id="accent-picker-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Seleccionar color de acento</h3>
+        <button class="modal-close" id="accent-picker-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs">
+          <button class="tab active" data-tab="presets">Preestablecidos</button>
+          <button class="tab" data-tab="custom">Color personalizado</button>
+        </div>
+        <div class="tab-content active" id="accent-tab-presets">
+          <div class="bg-grid" id="accent-presets-grid"></div>
+        </div>
+        <div class="tab-content" id="accent-tab-custom">
+          <div class="field">
+            <label for="accent-custom-color">Color sólido</label>
+            <div class="color-row">
+              <div class="color-item">
+                <div class="color-circle" id="accent-custom-circle" style="background:#f4b942">
+                  <input type="color" id="accent-custom-color" value="#f4b942">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="accent-custom-hex">Código HEX</label>
+            <input type="text" id="accent-custom-hex" value="#f4b942" placeholder="#000000">
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="accent-picker-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="accent-picker-apply">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/icons.js"></script>
   <script src="js/api.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/generator.js"></script>
   <script src="js/bg-picker.js"></script>
+  <script src="js/accent-picker.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/export.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -279,6 +319,7 @@
         Editor.init();
         await Editor.bootstrap();
         BackgroundPicker.init();
+        AccentPicker.init();
 
         document.getElementById('btn-export-one').addEventListener('click', () => Exporter.exportOne());
         document.getElementById('btn-export-all').addEventListener('click', () => Exporter.exportAll());

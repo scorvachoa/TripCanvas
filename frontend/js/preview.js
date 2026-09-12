@@ -23,7 +23,7 @@ function buildDesignFromControls() {
   return {
     background: document.getElementById('d-bg-value').value || '#0f1a2e',
     text: document.getElementById('d-text').value || '#ffffff',
-    accent: document.getElementById('d-accent').value || '#f4b942',
+    accent: document.getElementById('d-accent-value').value || '#f4b942',
     overlay: `rgba(0,0,0,${overlay})`,
     font: document.getElementById('d-font').value,
     showLogo: document.getElementById('d-logo').checked,
