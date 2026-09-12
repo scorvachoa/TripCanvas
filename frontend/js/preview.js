@@ -21,7 +21,7 @@ function buildDesignFromControls() {
   const overlay = parseFloat(document.getElementById('d-overlay').value || '0.35');
   const textScale = parseFloat(document.getElementById('d-text-scale').value || '1');
   return {
-    background: document.getElementById('d-bg').value || '#0f1a2e',
+    background: document.getElementById('d-bg-value').value || '#0f1a2e',
     text: document.getElementById('d-text').value || '#ffffff',
     accent: document.getElementById('d-accent').value || '#f4b942',
     overlay: `rgba(0,0,0,${overlay})`,

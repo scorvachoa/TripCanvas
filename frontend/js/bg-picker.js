@@ -72,7 +72,7 @@ const BackgroundPicker = {
     this._selected = null;
     document.getElementById('bg-picker-overlay').classList.remove('hidden');
     this._switchTab(this._lastTab);
-    const currentBg = document.getElementById('d-bg').value;
+    const currentBg = document.getElementById('d-bg-value').value;
     document.querySelectorAll('.bg-swatch').forEach(s => {
       s.classList.toggle('selected', s.dataset.value === currentBg);
     });
@@ -106,13 +106,12 @@ const BackgroundPicker = {
   },
 
   _setBg(value) {
-    document.getElementById('d-bg').value = value;
-    const circle = document.getElementById('d-bg-circle');
-    if (value.startsWith('linear-gradient') || value.startsWith('radial-gradient')) {
-      circle.style.background = value;
-    } else {
-      circle.style.background = value;
+    document.getElementById('d-bg-value').value = value;
+    if (!value.startsWith('linear-gradient') && !value.startsWith('radial-gradient')) {
+      document.getElementById('d-bg').value = value;
     }
+    const circle = document.getElementById('d-bg-circle');
+    circle.style.background = value;
     if (typeof renderPreview === 'function') {
       renderPreview();
     }
