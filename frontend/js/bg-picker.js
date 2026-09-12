@@ -51,18 +51,19 @@ const BackgroundPicker = {
     document.getElementById('bg-picker-close').addEventListener('click', () => this.close());
     document.getElementById('bg-picker-cancel').addEventListener('click', () => this.close());
     document.getElementById('bg-picker-apply').addEventListener('click', () => this.apply());
-    document.getElementById('bg-custom-apply').addEventListener('click', () => this._applyCustom());
 
     const customColor = document.getElementById('bg-custom-color');
     const customHex = document.getElementById('bg-custom-hex');
     customColor.addEventListener('input', () => {
       customHex.value = customColor.value;
       document.getElementById('bg-custom-circle').style.background = customColor.value;
+      this._selected = customColor.value;
     });
     customHex.addEventListener('input', () => {
       if (/^#[0-9a-fA-F]{6}$/.test(customHex.value)) {
         customColor.value = customHex.value;
         document.getElementById('bg-custom-circle').style.background = customHex.value;
+        this._selected = customHex.value;
       }
     });
   },
@@ -101,12 +102,6 @@ const BackgroundPicker = {
     if (this._selected) {
       this._setBg(this._selected);
     }
-    this.close();
-  },
-
-  _applyCustom() {
-    const color = document.getElementById('bg-custom-color').value;
-    this._setBg(color);
     this.close();
   },
 

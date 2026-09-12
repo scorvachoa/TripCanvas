@@ -55,7 +55,7 @@ def _esc(value) -> str:
     return html_module.escape(str(value or ""))
 
 
-_CSS_VALUE_RE = re.compile(r"^[a-zA-Z0-9 #,.()%'\"\x27\x22\-\u00a0]+$")
+_CSS_VALUE_RE = re.compile(r"^[a-zA-Z0-9 #,.()%'\"\x27\x22\-:\u00a0]+$")
 
 
 def _css(value) -> str:
