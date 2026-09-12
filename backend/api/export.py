@@ -62,7 +62,7 @@ def preview_card(
 async def export_card(
     payload: ExportRequest,
     background: BackgroundTasks,
-    _limit: None = Depends(rate_limit(max_requests=5)),
+    _limit: None = Depends(rate_limit(max_requests=30)),
 ) -> FileResponse:
     tmp_dir = Path(tempfile.mkdtemp(prefix="tc_export_"))
     try:
@@ -92,7 +92,7 @@ async def export_card(
 async def export_all(
     payload: ExportBulkRequest,
     background: BackgroundTasks,
-    _limit: None = Depends(rate_limit(max_requests=5)),
+    _limit: None = Depends(rate_limit(max_requests=30)),
 ) -> FileResponse:
     if not payload.cards:
         raise HTTPException(status_code=422, detail="No hay tarjetas para exportar.")
